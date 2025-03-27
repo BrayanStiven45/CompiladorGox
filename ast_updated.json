@@ -1,0 +1,48 @@
+{
+    "stmts": [
+        {
+            "name": "suma",
+            "parameters": [
+                {
+                    "name": "a",
+                    "type": "int"
+                },
+                {
+                    "name": "b",
+                    "type": "int"
+                }
+            ],
+            "return_type": "int",
+            "statements": [
+                {
+                    "location": {
+                        "name": "c"
+                    },
+                    "expression": {
+                        "op": "+",
+                        "left": {
+                            "name": "a"
+                        },
+                        "right": {
+                            "name": "b"
+                        }
+                    }
+                },
+                {
+                    "location": {
+                        "name": "c"
+                    },
+                    "expression": {
+                        "op": "+",
+                        "left": {
+                            "name": "a"
+                        },
+                        "right": {
+                            "name": "b"
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}

@@ -4,7 +4,8 @@ from model import (
 	Assignment, Program, Statement, Location,
 	BreakStmt, ContinueStmt, Binary, Literal,
 	Unary, TypeConversion, FuncCall, Vardecl,
-	Funcdecl, Parameter, Expression
+	Funcdecl, Parameter, Expression, IfStmt,
+	PrintStmt, WhileStmt, ReturnStmt
 )
 import sys
 import os
@@ -38,7 +39,7 @@ class Parser:
 			return self.assignment()
 		elif self.match("VAR") or self.match("CONST"):
 			return self.vardecl()
-		elif self.match("FUNC"):
+		elif self.match("FUNC") or self.match("IMPORT"):
 			return self.funcdecl()
 		elif self.match("IF"):
 			return self.if_stmt()
@@ -93,6 +94,11 @@ class Parser:
 
 	def funcdecl(self) -> Funcdecl:
 		
+		is_import = False
+		if self.previous().type == "IMPORT":
+			is_import = True
+			self.consume("FUNC", "Se esperaba la palabra clave 'func' ")
+
 		name = self.consume("ID", "Se esperaba un identificador").value
 		self.consume("LPAREN", "Se esperaba un parentesis izquierdo '(' ")
 		param = self.parameters()
@@ -105,25 +111,52 @@ class Parser:
 		# stat = self.parse()
 		self.consume("RBRACE", "Se esperaba una llave derecha '}' ")
 
-		return Funcdecl(name, param, return_type, stat)
+		return Funcdecl(is_import, name, param, return_type, stat)
 		
-	def if_stmt(self):
-		pass
+	def if_stmt(self) -> IfStmt:
+		
+		expr = self.expression()
+		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
+		conseq = [] #Consecuencia
+		while self.peek().type != "RBRACE":
+			conseq.append(self.statement())
+		self.match("RBRACE")
 
-	def while_stmt(self):
-		pass
+		alter = [] #Alternativa
+		if self.match("ELSE"):
+			self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
+			while self.peek().type != "RBRACE":
+				alter.append(self.statement())
+			self.match("RBRACE")
 		
-	def return_stmt(self):
-		pass
+		return IfStmt(expr, conseq, alter)
+
+	def while_stmt(self) -> WhileStmt:
+		
+		expr = self.expression()
+		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
+		stat = []
+		while self.peek().type != "RBRACE":
+			stat.append(self.statement())
+		self.match("RBRACE")
+		return WhileStmt(expr, stat)
+		
+	def return_stmt(self) -> ReturnStmt:
+		
+		expr = self.expression()
+		self.consume("SEMI", "Se esperaba un punto y coma ';'")
+		return ReturnStmt(expr)
 		
 	def print_stmt(self):
-		pass
+		
+		expr = self.expression()
+		self.consume("SEMI", "Se esperaba un punto y coma ';'")
+		return PrintStmt(expr)
 		
 	# -------------------------------
 	# Análisis de expresiones
 	# -------------------------------
 	def expression(self) -> Expression:
-		
 		expre = self.orterm()
 		while self.match("OR"):
 			right = self.orterm()
@@ -166,8 +199,8 @@ class Parser:
 			addterm = Binary(op, addterm, right)
 		return addterm
 		
-	def binary_op(self, operators, next_rule):
-		pass
+	# def binary_op(self, operators, next_rule):
+	# 	pass
 		
 	def factor(self) -> Expression:
 		
@@ -261,35 +294,37 @@ class Parser:
 # Prueba del Parser con Tokens
 # -------------------------------
 tokens = [
-    Token(type='FUNC', value='func', lineno=1),
-    Token(type='ID', value='suma', lineno=1),
-    Token(type='LPAREN', value='(', lineno=1),
-    
+    # While exterior: while a < 5
+    Token(type='WHILE', value='while', lineno=1),
     Token(type='ID', value='a', lineno=1),
-    Token(type='INT', value='int', lineno=1),
-    Token(type='COMMA', value=',', lineno=1),
-    Token(type='ID', value='b', lineno=1),
-    Token(type='INT', value='int', lineno=1),
+    Token(type='LT', value='<', lineno=1),
+    Token(type='INTEGER', value='5', lineno=1),
     
-    Token(type='RPAREN', value=')', lineno=1),
-    Token(type='INT', value='int', lineno=1),
-    Token(type='LBRACE', value='{', lineno=1),
+    # Inicio del bloque del while exterior
+    Token(type='LBRACE', value='{', lineno=2),
     
-    Token(type='ID', value='c', lineno=2),
-	Token(type='ASSIGN', value='=', lineno=2),
-    Token(type='ID', value='a', lineno=2),
-    Token(type='PLUS', value='+', lineno=2),
-    Token(type='ID', value='b', lineno=2),
-    Token(type='SEMI', value=';', lineno=2),
-
-	Token(type='ID', value='c', lineno=3),
-	Token(type='ASSIGN', value='=', lineno=3),
-    Token(type='ID', value='a', lineno=3),
-    Token(type='PLUS', value='+', lineno=3),
+    # While interior: while b > 3
+    Token(type='WHILE', value='while', lineno=3),
     Token(type='ID', value='b', lineno=3),
-    Token(type='SEMI', value=';', lineno=3),
+    Token(type='GT', value='>', lineno=3),
+    Token(type='INTEGER', value='3', lineno=3),
     
-    Token(type='RBRACE', value='}', lineno=4),
+    # Inicio del bloque del while interior
+    Token(type='LBRACE', value='{', lineno=4),
+    
+    # Sentencia dentro del while interior: print b;
+    Token(type='PRINT', value='print', lineno=5),
+    Token(type='ID', value='b', lineno=5),
+    Token(type='SEMI', value=';', lineno=5),
+    
+    # Fin del bloque del while interior
+    Token(type='RBRACE', value='}', lineno=6),
+    
+    # Fin del bloque del while exterior
+    Token(type='RBRACE', value='}', lineno=7),
+    
+    # Fin del archivo
+    Token(type='EOF', value='', lineno=8),
 ]
 
 parser = Parser(tokens)

@@ -47,8 +47,8 @@ class PrintStmt(Statement):
 @dataclass
 class IfStmt(Statement):
   condition: Expression
-  consequence: Statement
-  alternative: Statement
+  consequence: List[Statement]
+  alternative: List[Statement]
 
 # 1.4 While Loop
 #     while test { body }
@@ -108,6 +108,7 @@ class Parameter(Node):
 #     func name(parameters) return_type { statements }
 @dataclass
 class Funcdecl(Statement):
+  is_import: bool
   name: str
   parameters: List[Parameter]
   return_type: str

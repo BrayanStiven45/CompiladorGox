@@ -1,46 +1,33 @@
 {
     "stmts": [
         {
-            "name": "suma",
-            "parameters": [
-                {
-                    "name": "a",
-                    "type": "int"
+            "condition": {
+                "op": "<",
+                "left": {
+                    "name": "a"
                 },
-                {
-                    "name": "b",
-                    "type": "int"
+                "right": {
+                    "type": "5"
                 }
-            ],
-            "return_type": "int",
-            "statements": [
+            },
+            "body": [
                 {
-                    "location": {
-                        "name": "c"
-                    },
-                    "expression": {
-                        "op": "+",
+                    "condition": {
+                        "op": ">",
                         "left": {
-                            "name": "a"
+                            "name": "b"
                         },
                         "right": {
-                            "name": "b"
+                            "type": "3"
                         }
-                    }
-                },
-                {
-                    "location": {
-                        "name": "c"
                     },
-                    "expression": {
-                        "op": "+",
-                        "left": {
-                            "name": "a"
-                        },
-                        "right": {
-                            "name": "b"
+                    "body": [
+                        {
+                            "expression": {
+                                "name": "b"
+                            }
                         }
-                    }
+                    ]
                 }
             ]
         }

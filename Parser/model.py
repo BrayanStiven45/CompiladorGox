@@ -25,8 +25,17 @@ class Expression(Node):
 
 @dataclass
 class Location(Node):
-    name: Union[str, Expression]
+  pass
 
+# Para tipo '`'
+@dataclass
+class LocationMem(Location):
+  expr: Expression
+
+# Para tipo 'ID'
+@dataclass
+class LocationPrimi(Location):
+  name: str
 # 1.1 Assignment
 #
 #     location = expression ;

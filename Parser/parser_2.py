@@ -5,7 +5,8 @@ from model import (
 	BreakStmt, ContinueStmt, Binary, Literal,
 	Unary, TypeConversion, FuncCall, Vardecl,
 	Funcdecl, Parameter, Expression, IfStmt,
-	PrintStmt, WhileStmt, ReturnStmt
+	PrintStmt, WhileStmt, ReturnStmt, LocationMem,
+	LocationPrimi
 )
 import sys
 import os
@@ -13,7 +14,7 @@ import os
 from rich import print
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-from Analizador_lexico.analizador_lexico import Token
+from Analizador_lexico.analizador_lexico import Token, Tokenize
 
 
 
@@ -35,7 +36,7 @@ class Parser:
 	# Análisis de declaraciones
 	# -------------------------------
 	def statement(self) -> Statement:
-		if self.match("ID") or self.match("BACKTICK"): #BACKTICK: '`'
+		if self.match("ID") or self.match("DEREF"): #DEREF: '`'
 			return self.assignment()
 		elif self.match("VAR") or self.match("CONST"):
 			return self.vardecl()
@@ -61,9 +62,9 @@ class Parser:
 		location = None
 
 		if self.previous().type == "ID":
-			location = Location(self.previous().value)
-		elif self.previous().type == "BACKTICK":
-			location = Location(self.expression())
+			location = LocationPrimi(self.previous().value)
+		elif self.previous().type == "DEREF":
+			location = LocationMem(self.expression())
 		
 		self.consume("ASSIGN", "Se esperaba un signo igual '='")
 
@@ -204,12 +205,13 @@ class Parser:
 		
 	def factor(self) -> Expression:
 		
-		if self.match("INTEGER") or self.match("FLOAT") or self.match("CHAR") or self.match("TRUE") or self.match("FALSE"):
+		if self.match("INTEGER") or self.match("FLOATING") or self.match("CHARACTER") or self.match("TRUE") or self.match("FALSE"):
 			return Literal(self.previous().value)
 		elif self.match("PLUS") or self.match("MINUS") or self.match("GROW"):
 			return Unary(self.previous().value, self.expression())
 		elif self.match("LPAREN"):
 			expr = self.expression()
+			# print(expr)
 			self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
 			return expr
 		elif self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"): # Para type
@@ -226,9 +228,9 @@ class Parser:
 				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
 				return FuncCall(id, args)
 			else:
-				return Location(id)
-		elif self.match("BACKTICK"):
-			return Location(self.expression())
+				return LocationPrimi(id)
+		elif self.match("DEREF"):
+			return LocationMem(self.expression())
 		else:
 			raise SyntaxError(f"Línea {self.peek().lineno}: Factor inesperado")
 
@@ -293,39 +295,43 @@ class Parser:
 # -------------------------------
 # Prueba del Parser con Tokens
 # -------------------------------
-tokens = [
-    # While exterior: while a < 5
-    Token(type='WHILE', value='while', lineno=1),
-    Token(type='ID', value='a', lineno=1),
-    Token(type='LT', value='<', lineno=1),
-    Token(type='INTEGER', value='5', lineno=1),
+# tokens = [
+#     # While exterior: while a < 5
+#     Token(type='WHILE', value='while', lineno=1),
+#     Token(type='ID', value='a', lineno=1),
+#     Token(type='LT', value='<', lineno=1),
+#     Token(type='INTEGER', value='5', lineno=1),
     
-    # Inicio del bloque del while exterior
-    Token(type='LBRACE', value='{', lineno=2),
+#     # Inicio del bloque del while exterior
+#     Token(type='LBRACE', value='{', lineno=2),
     
-    # While interior: while b > 3
-    Token(type='WHILE', value='while', lineno=3),
-    Token(type='ID', value='b', lineno=3),
-    Token(type='GT', value='>', lineno=3),
-    Token(type='INTEGER', value='3', lineno=3),
+#     # While interior: while b > 3
+#     Token(type='WHILE', value='while', lineno=3),
+#     Token(type='ID', value='b', lineno=3),
+#     Token(type='GT', value='>', lineno=3),
+#     Token(type='INTEGER', value='3', lineno=3),
     
-    # Inicio del bloque del while interior
-    Token(type='LBRACE', value='{', lineno=4),
+#     # Inicio del bloque del while interior
+#     Token(type='LBRACE', value='{', lineno=4),
     
-    # Sentencia dentro del while interior: print b;
-    Token(type='PRINT', value='print', lineno=5),
-    Token(type='ID', value='b', lineno=5),
-    Token(type='SEMI', value=';', lineno=5),
+#     # Sentencia dentro del while interior: print b;
+#     Token(type='PRINT', value='print', lineno=5),
+#     Token(type='ID', value='b', lineno=5),
+#     Token(type='SEMI', value=';', lineno=5),
     
-    # Fin del bloque del while interior
-    Token(type='RBRACE', value='}', lineno=6),
+#     # Fin del bloque del while interior
+#     Token(type='RBRACE', value='}', lineno=6),
     
-    # Fin del bloque del while exterior
-    Token(type='RBRACE', value='}', lineno=7),
+#     # Fin del bloque del while exterior
+#     Token(type='RBRACE', value='}', lineno=7),
     
-    # Fin del archivo
-    Token(type='EOF', value='', lineno=8),
-]
+#     # Fin del archivo
+#     Token(type='EOF', value='', lineno=8),
+# ]
+
+tokenize = Tokenize()
+
+tokens = tokenize.main('C:/Users/valen/Escritorio/universidad/7_semestre/compiladores/Compilador/Parser/prueba.gox')
 
 parser = Parser(tokens)
 ast = parser.parse()
@@ -343,6 +349,20 @@ def ast_to_dict(node):
 	else:
 		return node
 
+# def ast_to_dict(node):
+#     if isinstance(node, list):
+#         return [ast_to_dict(item) for item in node]
+#     elif hasattr(node, '__dict__'):
+#         # Tomar el nombre de la clase como "type"
+#         d = {"type": node.__class__.__name__}
+#         # Convertir cada atributo
+#         for key, value in node.__dict__.items():
+#             d[key] = ast_to_dict(value)
+#         return d
+#     else:
+#         return node
+
+
 ast_json = json.dumps(ast_to_dict(ast), indent=4)
 
 # Guardar el AST como JSON
@@ -352,4 +372,5 @@ with open(ast_file_path, "w", encoding="utf-8") as f:
 
 # Proporcionar el enlace de descarga
 ast_file_path
+
 

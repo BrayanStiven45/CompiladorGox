@@ -1,0 +1,49 @@
+// AST
+digraph {
+	node_0 [label="{
+    \"stmts\": [
+        {
+            \"kind\": \"var\",
+            \"type\": \"int\",
+            \"name\": \"x\",
+            \"value\": {
+                \"oper\": \"^\",
+                \"expression\": {
+                    \"type\": \"8192\"
+                }
+            }
+        },
+        {
+            \"kind\": \"var\",
+            \"type\": \"int\",
+            \"name\": \"addr\",
+            \"value\": {
+                \"type\": \"1234\"
+            }
+        },
+        {
+            \"location\": {
+                \"expr\": {
+                    \"name\": \"addr\"
+                }
+            },
+            \"expression\": {
+                \"type\": \"5678\"
+            }
+        },
+        {
+            \"expression\": {
+                \"expr\": {
+                    \"op\": \"+\",
+                    \"left\": {
+                        \"name\": \"addr\"
+                    },
+                    \"right\": {
+                        \"type\": \"8\"
+                    }
+                }
+            }
+        }
+    ]
+}" color=lightblue shape=box style=filled]
+}

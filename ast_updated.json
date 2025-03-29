@@ -1,35 +1,46 @@
 {
     "stmts": [
         {
-            "condition": {
-                "op": "<",
-                "left": {
-                    "name": "a"
-                },
-                "right": {
-                    "type": "5"
+            "kind": "var",
+            "type": "int",
+            "name": "x",
+            "value": {
+                "oper": "^",
+                "expression": {
+                    "type": "8192"
+                }
+            }
+        },
+        {
+            "kind": "var",
+            "type": "int",
+            "name": "addr",
+            "value": {
+                "type": "1234"
+            }
+        },
+        {
+            "location": {
+                "expr": {
+                    "name": "addr"
                 }
             },
-            "body": [
-                {
-                    "condition": {
-                        "op": ">",
-                        "left": {
-                            "name": "b"
-                        },
-                        "right": {
-                            "type": "3"
-                        }
+            "expression": {
+                "type": "5678"
+            }
+        },
+        {
+            "expression": {
+                "expr": {
+                    "op": "+",
+                    "left": {
+                        "name": "addr"
                     },
-                    "body": [
-                        {
-                            "expression": {
-                                "name": "b"
-                            }
-                        }
-                    ]
+                    "right": {
+                        "type": "8"
+                    }
                 }
-            ]
+            }
         }
     ]
 }

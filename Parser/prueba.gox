@@ -1,0 +1,66 @@
+// Primera Pruba
+/*print 2 + 3 * -4;
+print 2.0 - 3.0 / -4.0;
+print -2 + 3;*/
+
+// Segunda Prueba
+/*const pi = 3.14159;
+var tau float;
+tau = 2.0 * pi;
+print tau;*/
+
+// Tercera Prueba
+/*var a int = 2;
+var b int = 3;
+if a < b {
+    print a;
+} else {
+    print b;
+}*/
+
+// Cuarta Prueba
+/*const n = 10;
+var x int = 1;
+var fact int = 1;
+
+while x < n {
+    fact = fact * x;
+    print fact;
+    x = x + 1;
+}*/
+
+// Quinta Prueba
+/*func square(x int) int {
+    return x*x;
+}
+
+print square(4);
+print square(10);*/
+
+// Sexta Prueba
+/*func fact(n int) int {
+    var x int = 1;
+    var result int = 1;
+    while x < n {
+        result = result * x;
+        x = x + 1;
+    }
+    return result;
+}
+
+print(fact(10));*/
+
+// Septima Prueba
+/*var pi = 3.14159;
+var spam = 42;
+
+print(spam * int(pi));
+print(float(spam) * pi);
+print(int(spam) * int(pi));*/
+
+// Octava Prueba
+
+var x int = ^8192;      // Incrementa memoria por 8192 bytes
+var addr int = 1234;
+`addr = 5678;           // Almacena 5678 en addr
+print(`addr + 8);

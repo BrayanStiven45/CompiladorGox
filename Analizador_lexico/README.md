@@ -30,7 +30,7 @@ El codigo se divide en 7 partes:
 
     5. Se crea la funcion tokenize que recibe el archivo .gox, donde por medio de un while se recorre el archivo caracter por caracter comparando cada caracter.
 
-        5.1. Si se encuentra un caracter de espacio, estos se ignoran, como saltos de linea, tab, y espacios.
+    5.1. Si se encuentra un caracter de espacio, estos se ignoran, como saltos de linea, tab, y espacios.
 
         5.2. Se ignoran los comentarios de bloque, y se guarda el error en la variable errors si se encuentra que no se cierra el comentario
 
@@ -62,3 +62,6 @@ Estructura para llamar la conjunto de pruebas unitarias:
 2. Durante el desarrollo de la extensión de resaltado de sintaxis para nuestro lenguaje, nos enfrentamos a varios desafíos técnicos que requirieron soluciones específicas para garantizar una correcta integración en Visual Studio Code.
 Uno de los principales problemas fue el correcto reconocimiento y coloreado de los comentarios multilínea (/* ... */). Inicialmente, los operadores y palabras clave dentro de los comentarios seguían resaltándose con sus colores originales en lugar de mostrarse como texto neutro. Para solucionar esto, ajustamos la configuración de la gramática en el archivo gox.tmLanguage.json,ya que el problema estaba arraigado en el orden de declaración de la expresión de los comentarios dentro del archivo.
 3. Otro aspecto que requirió ajustes fue la configuración de funciones adicionales en el editor, como el cierre automático de paréntesis y la capacidad de plegar y desplegar secciones de código. Dado que estas características no se pueden definir en el archivo de resaltado de sintaxis (gox.tmLanguage.json), fue necesario crear un archivo adicional de configuración (gox.configuration.json). Este archivo permite definir reglas específicas para el auto-cierre de símbolos como (), {}.
+
+
+

@@ -36,7 +36,14 @@ class Parser:
 	# Análisis de declaraciones
 	# -------------------------------
 	def statement(self) -> Statement:
-		if self.match("ID") or self.match("DEREF"): #DEREF: '`'
+		if self.match("ID"): #DEREF: '`'
+			if self.tokens[self.current].type == "ASSIGN":
+				return self.assignment()
+			else:
+				expr = self.expression()
+				self.consume("SEMI", "Se esperaba un punto y coma ';'")
+				return expr
+		elif self.match("DEREF"):
 			return self.assignment()
 		elif self.match("VAR") or self.match("CONST"):
 			return self.vardecl()
@@ -105,6 +112,7 @@ class Parser:
 		param = self.parameters()
 		self.consume("RPAREN", "Se esperaba un parentesis derecho ')' ")
 		return_type = self.advance().value
+		print(self.tokens[self.current])
 		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 		stat = []
 		while self.peek().type != "RBRACE":
@@ -296,42 +304,11 @@ class Parser:
 # Prueba del Parser con Tokens
 # -------------------------------
 # tokens = [
-#     # While exterior: while a < 5
-#     Token(type='WHILE', value='while', lineno=1),
-#     Token(type='ID', value='a', lineno=1),
-#     Token(type='LT', value='<', lineno=1),
-#     Token(type='INTEGER', value='5', lineno=1),
-    
-#     # Inicio del bloque del while exterior
-#     Token(type='LBRACE', value='{', lineno=2),
-    
-#     # While interior: while b > 3
-#     Token(type='WHILE', value='while', lineno=3),
-#     Token(type='ID', value='b', lineno=3),
-#     Token(type='GT', value='>', lineno=3),
-#     Token(type='INTEGER', value='3', lineno=3),
-    
-#     # Inicio del bloque del while interior
-#     Token(type='LBRACE', value='{', lineno=4),
-    
-#     # Sentencia dentro del while interior: print b;
-#     Token(type='PRINT', value='print', lineno=5),
-#     Token(type='ID', value='b', lineno=5),
-#     Token(type='SEMI', value=';', lineno=5),
-    
-#     # Fin del bloque del while interior
-#     Token(type='RBRACE', value='}', lineno=6),
-    
-#     # Fin del bloque del while exterior
-#     Token(type='RBRACE', value='}', lineno=7),
-    
-#     # Fin del archivo
-#     Token(type='EOF', value='', lineno=8),
 # ]
 
 tokenize = Tokenize()
 
-tokens = tokenize.main('C:/Users/valen/Escritorio/universidad/7_semestre/compiladores/Compilador/Parser/prueba.gox')
+tokens = tokenize.main('prueba.gox')
 
 parser = Parser(tokens)
 ast = parser.parse()
@@ -349,18 +326,6 @@ def ast_to_dict(node):
 	else:
 		return node
 
-# def ast_to_dict(node):
-#     if isinstance(node, list):
-#         return [ast_to_dict(item) for item in node]
-#     elif hasattr(node, '__dict__'):
-#         # Tomar el nombre de la clase como "type"
-#         d = {"type": node.__class__.__name__}
-#         # Convertir cada atributo
-#         for key, value in node.__dict__.items():
-#             d[key] = ast_to_dict(value)
-#         return d
-#     else:
-#         return node
 
 
 ast_json = json.dumps(ast_to_dict(ast), indent=4)

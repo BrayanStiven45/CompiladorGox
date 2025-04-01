@@ -323,7 +323,7 @@ def ast_to_dict(node):
         return [ast_to_dict(item) for item in node]
     elif hasattr(node, '__dict__'):
         # Tomar el nombre de la clase como "type"
-        d = {"type": node.__class__.__name__}
+        d = {"class": node.__class__.__name__}
         # Convertir cada atributo
         for key, value in node.__dict__.items():
             d[key] = ast_to_dict(value)

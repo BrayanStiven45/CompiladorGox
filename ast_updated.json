@@ -1,51 +1,57 @@
 {
-    "type": "Program",
+    "class": "Program",
     "stmts": [
         {
-            "type": "int",
+            "class": "Vardecl",
             "kind": "var",
+            "type": "int",
             "name": "x",
             "value": {
-                "type": "Unary",
+                "class": "Unary",
                 "oper": "^",
                 "expression": {
+                    "class": "Literal",
                     "type": "8192"
                 }
             }
         },
         {
-            "type": "int",
+            "class": "Vardecl",
             "kind": "var",
+            "type": "int",
             "name": "addr",
             "value": {
+                "class": "Literal",
                 "type": "1234"
             }
         },
         {
-            "type": "Assignment",
+            "class": "Assignment",
             "location": {
-                "type": "LocationMem",
+                "class": "LocationMem",
                 "expr": {
-                    "type": "LocationPrimi",
+                    "class": "LocationPrimi",
                     "name": "addr"
                 }
             },
             "expression": {
+                "class": "Literal",
                 "type": "5678"
             }
         },
         {
-            "type": "PrintStmt",
+            "class": "PrintStmt",
             "expression": {
-                "type": "LocationMem",
+                "class": "LocationMem",
                 "expr": {
-                    "type": "Binary",
+                    "class": "Binary",
                     "op": "+",
                     "left": {
-                        "type": "LocationPrimi",
+                        "class": "LocationPrimi",
                         "name": "addr"
                     },
                     "right": {
+                        "class": "Literal",
                         "type": "8"
                     }
                 }

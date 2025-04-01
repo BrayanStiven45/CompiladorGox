@@ -126,7 +126,7 @@ class Tokenize:
                 yield Token(ONE_CHAR[simbol], simbol, lineno) # Return the token with the type of the one-character symbol
                 pos += 1
             else:
-                self.prinError(text[pos], lineno)
+                self.printError(text[pos], lineno)
                 pos += 1
 
     # Print the errors

@@ -1,10 +1,12 @@
 {
+    "type": "Program",
     "stmts": [
         {
-            "kind": "var",
             "type": "int",
+            "kind": "var",
             "name": "x",
             "value": {
+                "type": "Unary",
                 "oper": "^",
                 "expression": {
                     "type": "8192"
@@ -12,16 +14,19 @@
             }
         },
         {
-            "kind": "var",
             "type": "int",
+            "kind": "var",
             "name": "addr",
             "value": {
                 "type": "1234"
             }
         },
         {
+            "type": "Assignment",
             "location": {
+                "type": "LocationMem",
                 "expr": {
+                    "type": "LocationPrimi",
                     "name": "addr"
                 }
             },
@@ -30,10 +35,14 @@
             }
         },
         {
+            "type": "PrintStmt",
             "expression": {
+                "type": "LocationMem",
                 "expr": {
+                    "type": "Binary",
                     "op": "+",
                     "left": {
+                        "type": "LocationPrimi",
                         "name": "addr"
                     },
                     "right": {

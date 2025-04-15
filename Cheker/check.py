@@ -56,7 +56,7 @@ class Checker(Visitor):
 			if isinstance(symbol, Vardecl):
 				# Si la variable es un constante, entonces no se puede assignar un valor
 				if symbol.kind == 'const':
-					raise Exception(f"AssignmentError: No se puede asignar un valor a una constante '{n.location.name}' \n")
+					raise Exception(f"AssignmentError: Linea {n.lineno}: No se puede asignar un valor a una constante '{n.location.name}' \n")
 
 		# Si location es una asignación a memoria	
 		if isinstance(n.location, LocationMem):
@@ -83,7 +83,7 @@ class Checker(Visitor):
 		if type2 in typenames and type2 == type1:
 			return True
 
-		raise Exception(f'AssigmentError: No se puede asignar el tipo \'{type2}\' a la variable de tipo \'{type1}\' \n')	
+		raise Exception(f'AssigmentError: Linea {n.lineno}: No se puede asignar el tipo \'{type2}\' a la variable de tipo \'{type1}\' \n')	
 
 
 	def visit(self, n:PrintStmt, env:Symtab):
@@ -100,7 +100,7 @@ class Checker(Visitor):
 		3. Si existe opcion n.else_, visitar
 		'''
 		if n.condition.accept(self, env) != 'bool':
-			raise Exception(f'IfError: La condición debe ser de tipo \'bool\' \n')
+			raise Exception(f'IfError: Linea {n.lineno}: La condición debe ser de tipo \'bool\' \n')
 
 		if_env = Symtab("ifSymbol", env)
 
@@ -119,7 +119,7 @@ class Checker(Visitor):
 		2. visitar n.body
 		'''
 		if n.condition.accept(self, env) != 'bool':
-			raise Exception(f'WhileError: La condición debe ser de tipo \'bool\' \n')
+			raise Exception(f'WhileError: Linea {n.lineno}: La condición debe ser de tipo \'bool\' \n')
 		
 		while_env = Symtab('loopSymbol', env)
 
@@ -137,7 +137,7 @@ class Checker(Visitor):
 			
 			env = env.parent
 
-		raise Exception(f'Error: Solo se puede usar en un ciclo') 
+		raise Exception(f'Error: Linea {n.lineno}: Solo se puede usar en un ciclo') 
 	
 	def visit(self, n:ReturnStmt, env:Symtab):
 		'''
@@ -147,14 +147,15 @@ class Checker(Visitor):
 		while env_apo.name != 'global':
 			if env_apo.name == 'funcSymbol':
 				type1 = n.expression.accept(self, env)
-				if type1 == env.get('func').return_type:
+				if type1 == env.get('func').type:
 					return True
 				else:
-					raise Exception(f'ReturnError: El tipo de retorno debe ser igual al tipo de la función')
+					raise Exception(f'ReturnError: Linea {n.lineno}: El retorno debe coincidir con el tipo de retorno declarado en la función')
 			
 			env_apo = env_apo.parent
 		
-		return None
+		raise Exception(f'ReturnError: Linea {n.lineno}: El retorno solo se puede usar dentro de una función')
+		
 	
 	# Declarations
 
@@ -171,12 +172,12 @@ class Checker(Visitor):
 		if n.value is None:
 
 			if n.kind == 'const':
-				raise Exception('VarDeclError: Se debe inicializar la variable constante')
+				raise Exception('VarDeclError: Linea {n.lineno}: Se debe inicializar la variable constante')
 			
 		else:
 			type2 = n.value.accept(self, env)
 			if n.type != type2 and n.type != None:
-				raise Exception(f'VarDeclError: No se puede asignar el tipo \'{type2}\' a la variable \'{n.name}\' de tipo \'{n.type}\' \n')
+				raise Exception(f'VarDeclError: Linea {n.lineno}: No se puede asignar el tipo \'{type2}\' a la variable \'{n.name}\' de tipo \'{n.type}\' \n')
 		
 
 			
@@ -223,7 +224,7 @@ class Checker(Visitor):
 		type2 = n.right.accept(self, env)
 
 		if type1 != type2:
-			raise Exception(f'BinaryError: No se puede hacer una operacion \'{n.op}\' entre \'{type1}\' y \'{type2}\' \n')
+			raise Exception(f'BinaryError: Linea {n.lineno}: No se puede hacer una operacion \'{n.op}\' entre \'{type1}\' y \'{type2}\' \n')
 		
 		return check_binop(n.op, type1, type2)
 		
@@ -240,7 +241,20 @@ class Checker(Visitor):
 		1. Visitar n.expr para validar
 		2. retornar el tipo del cast n.type
 		'''
-		pass
+		type_expr = n.exp.accept(self, env)
+		type_conv = n.type
+
+		if type_conv == 'char':
+			return type_conv
+		
+		if type_expr == 'char':
+			raise Exception(f'TypeConvertionError: Linea {n.lineno}: No se puede convertir un tipo \'char\' a tipo \'{type_conv}\' \n')
+		
+		#Preguntar para booleanos
+
+		return type_conv
+
+
 
 	def visit(self, n:FuncCall, env:Symtab):
 		'''
@@ -254,7 +268,7 @@ class Checker(Visitor):
 		func = env.get(n.name)
 
 		if func is None:
-			raise Exception(f'FunCallError: La funcion \'{n.name}\' no esta definida')
+			raise Exception(f'FunCallError: Linea {n.lineno}: La funcion \'{n.name}\' no esta definida')
 
 		for arg in n.arg:
 			arg.accept(self, env)
@@ -262,15 +276,15 @@ class Checker(Visitor):
 		num_arg = len(n.arg)
 		num_param = len(func.parameters)
 		if num_arg != num_param:
-			raise Exception(f'FunCallError: Numero de argumentos \'{num_arg}\' no concuerdan con el numero de parametros \'{num_param}\' de la funcion \'{func.name}\'')
+			raise Exception(f'FunCallError: Linea {n.lineno}: Numero de argumentos \'{num_arg}\' no concuerdan con el numero de parametros \'{num_param}\' de la funcion \'{func.name}\'')
 		
 		params = func.parameters
 		args = n.arg
 		for i in range(num_arg):
 			if params[i].accept(self, env) != args[i].accept(self, env):
-				raise Exception(f'FunCallError: Tipo de dato no coinciden')
+				raise Exception(f'FunCallError: Linea {n.lineno}: Tipo de dato no coinciden')
 		
-		return func.return_type
+		return func.type
 
 
 	def visit(self, n:LocationPrimi, env:Symtab):
@@ -282,7 +296,7 @@ class Checker(Visitor):
 		type1 = env.get(name_loc) # Nombre de la variable a la que se le asigna
 
 		if type1 is None:
-			raise NameError(f'La variable \'{name_loc}\' no existe \n')
+			raise NameError(f'Linea {n.lineno}: La variable \'{name_loc}\' no existe \n')
 		
 		if type1.type is None:
 			type1.type = type1.value.accept(self, env)

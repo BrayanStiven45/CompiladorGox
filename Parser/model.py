@@ -31,11 +31,13 @@ class Location(Node):
 @dataclass
 class LocationMem(Location):
   expr: Expression
+  lineno: int
 
 # Para tipo 'ID'
 @dataclass
 class LocationPrimi(Location):
   name: str
+  lineno: int
 # 1.1 Assignment
 #
 #     location = expression ;
@@ -43,6 +45,7 @@ class LocationPrimi(Location):
 class Assignment(Statement):
   location : Location
   expression : Expression
+  lineno: int
 
 #
 # 1.2 Printing
@@ -50,6 +53,7 @@ class Assignment(Statement):
 @dataclass
 class PrintStmt(Statement):
   expression: Expression
+  lineno: int
 
 # 1.3 Conditional
 #     if test { consequence } else { alternative }
@@ -58,6 +62,7 @@ class IfStmt(Statement):
   condition: Expression
   consequence: List[Statement]
   alternative: List[Statement]
+  lineno: int
 
 # 1.4 While Loop
 #     while test { body }
@@ -65,6 +70,7 @@ class IfStmt(Statement):
 class WhileStmt(Statement):
   condition: Expression
   body: Statement
+  lineno: int
 
 # 1.5 Break y Continue
 #     while test {
@@ -73,7 +79,7 @@ class WhileStmt(Statement):
 #     }
 @dataclass
 class BreakStmt(Statement):
-  pass
+  lineno: int
 
 # 1.5 Break y Continue
 #     while test {
@@ -82,13 +88,14 @@ class BreakStmt(Statement):
 #     }
 @dataclass
 class ContinueStmt(Statement):
-  pass
+  lineno: int
 
 # 1.6 Return un valor
 #     return expresion ;
 @dataclass
 class ReturnStmt(Statement):
   expression: Expression
+  lineno: int
 
 # 2.1 Variables.  Las Variables pueden ser declaradas de varias formas.
 #
@@ -101,6 +108,7 @@ class Vardecl(Statement):
   kind: str
   type: str
   name: str
+  lineno: int
   value: Expression = None
 
 # 2.3 Function Parameters
@@ -110,6 +118,7 @@ class Vardecl(Statement):
 class Parameter(Node):
   name: str
   type: str
+  lineno: int
   # value: Expression = None
 
 # 2.2 Function definitions.
@@ -120,7 +129,8 @@ class Funcdecl(Statement):
   is_import: bool
   name: str
   parameters: List[Parameter]
-  return_type: str
+  type: str
+  lineno: int
   statements: List[Statement] #Esto debe ser o una lista de statements o un none
 
 # Observar bien esta clase como debe de ser y a quien debe de heredar
@@ -138,6 +148,7 @@ class Funcdecl(Statement):
 class Literal(Expression):
   value: str
   type: str
+  lineno: int
 
 # 3.2 Binary Operators
 #     left + right   (Suma)
@@ -158,6 +169,7 @@ class Binary(Expression):
   op: str
   left: Expression
   right: Expression
+  lineno: int
 
 # 3.3 Unary Operators
 #     +operand  (Positivo)
@@ -169,6 +181,7 @@ class Binary(Expression):
 class Unary(Expression):
   oper: str
   expression : Expression
+  lineno: int
 
 
 # 3.5 Conversiones de tipo
@@ -178,6 +191,7 @@ class Unary(Expression):
 class TypeConversion(Expression):
   type: str
   exp : Expression
+  lineno: int
 
 # 3.6 Llamadas a función
 #     func(arg1, arg2, ..., argn)
@@ -185,6 +199,7 @@ class TypeConversion(Expression):
 class FuncCall(Expression):
   name: str
   arg: List[Expression]
+  lineno: int
 
 # #Para tipo 'ID'
 # @dataclass

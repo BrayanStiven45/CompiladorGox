@@ -62,19 +62,19 @@ print(int(spam) * int(pi));*/
 
 // var x integer= 4; Prabar el parser para esta ocaciones
 
-// var x int += (2.5 + 2.5) + 2.5; Prabar el parser para esta ocaciones
 
+var x float = 3.14;
 
-var memsize int = ^1000;
-const addr = 500;
+func fib(n int) int {
+	if n <= 1 { 
+		return 1;
+	}
+	return fib(n-1) + fib(n-2);
+}
 
-`addr = 1234;          // Stores 1234 at memory address addr
-print `addr + 0;       // Reads 1234 from memory address addr
+func main() int {
+	var n int = 12;
 
-`addr = 12.34;         // Stores 12.34
-print `addr + 0;
+	print fib(n);
+}
 
-`addr = 'H';
-`4 + 5 = 5;
-print char(`addr);
-print '\n';

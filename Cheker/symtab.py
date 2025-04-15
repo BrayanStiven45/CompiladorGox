@@ -25,7 +25,8 @@ class Symtab:
 		del lenguaje C, es decir, 'se ha asignado espacio para el
 		simbol', en lugar de una declaración.
 		'''
-		pass
+		def __init__(self, name):
+			super().__init__(f"El símbolo '{name}' ya ha sido declarado.")
 		
 	class SymbolConflictError(Exception):
 		'''
@@ -33,7 +34,8 @@ class Symtab:
 		un símbolo a una tabla donde el símbolo ya existe y su tipo
 		difiere del existente previamente.
 		'''
-		pass
+		def __init__(self, name, existing_type, new_type):
+			super().__init__(f'Conflicto de tipos para el símbolo \'{name}\' ya esta declarado: {existing_type} != {new_type}.')
 		
 	def __init__(self, name, parent=None):
 		'''
@@ -55,10 +57,11 @@ class Symtab:
 		o FuncDeclaration)
 		'''
 		if name in self.entries:
-			if self.entries[name].dtype != value.dtype:
-				raise Symtab.SymbolConflictError()
+			existing_type = self.entries[name].type
+			if existing_type != value.type:
+				raise Symtab.SymbolConflictError(name, existing_type, value.type)
 			else:
-				raise Symtab.SymbolDefinedError()
+				raise Symtab.SymbolDefinedError(name)
 		self.entries[name] = value
 		
 	def get(self, name):
@@ -73,16 +76,6 @@ class Symtab:
 			return self.parent.get(name)
 		return
 		
-	def modify_table(self, name, value):
-		'''
-		Modifica el simbol con el nombre dado en la tabla de
-		simbol. Si no se encuentra en la tabla actual, busca
-		en las tablas de simbolos principales.
-		'''
-		if name in self.entries:
-			self.entries[name] = value
-		elif self.parent:
-			self.parent.modify_table(name, value)
 		
 	def print(self):
 		table = Table(title = f"Symbol Table: '{self.name}'")

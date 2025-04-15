@@ -40,6 +40,7 @@ class Parser:
 			if self.tokens[self.current].type == "ASSIGN":
 				return self.assignment()
 			else:
+				self.current -= 1
 				expr = self.expression()
 				self.consume("SEMI", "Se esperaba un punto y coma ';'")
 				return expr
@@ -54,11 +55,13 @@ class Parser:
 		elif self.match("WHILE"):
 			return self.while_stmt()
 		elif self.match("BREAK"):
+			lineno = self.previous().lineno
 			self.consume("SEMI", "Se esperaba un signo de punto y coma ';'") #Verificar si se debe consumir un punto y coma
-			return BreakStmt()
+			return BreakStmt(lineno)
 		elif self.match("CONTINUE"):
+			lineno = self.previous().lineno
 			self.consume("SEMI", "Se esperaba un signo de punto y coma ';'") #Verificar si se debe consumir un punto y coma
-			return ContinueStmt()
+			return ContinueStmt(lineno)
 		elif self.match("RETURN"):
 			return self.return_stmt()
 		elif self.match("PRINT"):
@@ -69,11 +72,12 @@ class Parser:
 			
 	def assignment(self) -> Assignment:
 		location = None
+		lineno = self.previous().lineno
 
 		if self.previous().type == "ID":
-			location = LocationPrimi(self.previous().value)
+			location = LocationPrimi(self.previous().value, self.previous().lineno)
 		elif self.previous().type == "DEREF":
-			location = LocationMem(self.expression())
+			location = LocationMem(self.expression(), self.previous().lineno)
 		
 		self.consume("ASSIGN", "Se esperaba un signo igual '='")
 
@@ -82,11 +86,12 @@ class Parser:
 
 		self.consume("SEMI", "Se esperaba un signo de punto y coma ';'")
 
-		return Assignment(location, expr)
+		return Assignment(location, expr, lineno)
 		
 	def vardecl(self) -> Vardecl:
 		
 		kind = self.previous().value
+		lineno = self.previous().lineno
 		
 		name = self.consume("ID", "Se esperaba un identificador").value
 		type = None
@@ -108,12 +113,13 @@ class Parser:
 
 		self.consume("SEMI", "Se esperaba un punto y como ';'")
 
-		return Vardecl(kind, type, name, expr)
+		return Vardecl(kind, type, name, lineno, expr)
 
 
 	def funcdecl(self) -> Funcdecl:
 		
 		is_import = False
+		lineno = self.previous().lineno
 		if self.previous().type == "IMPORT":
 			is_import = True
 			self.consume("FUNC", "Se esperaba la palabra clave 'func' ")
@@ -124,6 +130,11 @@ class Parser:
 		self.consume("RPAREN", "Se esperaba un parentesis derecho ')' ")
 		return_type = self.advance().value
 
+		if is_import:
+			self.consume("SEMI", "Se esperaba un punto y coma ';'")
+
+			return Funcdecl(is_import, name, param, return_type, lineno, [])
+
 		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 		stat = []
 		while self.peek().type != "RBRACE":
@@ -131,10 +142,11 @@ class Parser:
 		# stat = self.parse()
 		self.consume("RBRACE", "Se esperaba una llave derecha '}' ")
 
-		return Funcdecl(is_import, name, param, return_type, stat)
+		return Funcdecl(is_import, name, param, return_type, lineno, stat)
 		
 	def if_stmt(self) -> IfStmt:
 		
+		lineno = self.previous().lineno
 		expr = self.expression()
 		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 		conseq = [] #Consecuencia
@@ -149,29 +161,32 @@ class Parser:
 				alter.append(self.statement())
 			self.match("RBRACE")
 		
-		return IfStmt(expr, conseq, alter)
+		return IfStmt(expr, conseq, alter, lineno)
 
 	def while_stmt(self) -> WhileStmt:
 		
+		lineno = self.previous().lineno
 		expr = self.expression()
 		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 		stat = []
 		while self.peek().type != "RBRACE":
 			stat.append(self.statement())
 		self.match("RBRACE")
-		return WhileStmt(expr, stat)
+		return WhileStmt(expr, stat, lineno)
 		
 	def return_stmt(self) -> ReturnStmt:
 		
+		lineno = self.previous().lineno
 		expr = self.expression()
 		self.consume("SEMI", "Se esperaba un punto y coma ';'")
-		return ReturnStmt(expr)
+		return ReturnStmt(expr, lineno)
 		
 	def print_stmt(self):
 		
+		lineno = self.previous().lineno
 		expr = self.expression()
 		self.consume("SEMI", "Se esperaba un punto y coma ';'")
-		return PrintStmt(expr)
+		return PrintStmt(expr, lineno)
 		
 	# -------------------------------
 	# Análisis de expresiones
@@ -179,16 +194,18 @@ class Parser:
 	def expression(self) -> Expression:
 		expre = self.orterm()
 		while self.match("OR"):
+			lineno = self.previous().lineno
 			right = self.orterm()
-			expre = Binary("||", expre, right)
+			expre = Binary("||", expre, right, lineno)
 		return expre
 		
 	def orterm(self) -> Expression:
 		
 		orterm = self.andterm()
 		while self.match("AND"):
+			lineno = self.previous().lineno
 			right = self.andterm()
-			orterm = Binary("&&", orterm, right)
+			orterm = Binary("&&", orterm, right, lineno)
 		return orterm
 
 		
@@ -197,8 +214,9 @@ class Parser:
 		andterm = self.relterm()
 		while self.match("NE") or self.match("EQ") or self.match("GE") or self.match("LE") or self.match("GT") or self.match("LT"):
 			op = self.previous().value
+			lineno = self.previous().lineno
 			right = self.relterm()
-			andterm = Binary(op, andterm, right)
+			andterm = Binary(op, andterm, right, lineno)
 		return andterm
 		
 	def relterm(self) -> Expression:
@@ -206,8 +224,9 @@ class Parser:
 		relterm = self.addterm()
 		while self.match("PLUS") or self.match("MINUS"):
 			op = self.previous().value
+			lineno = self.previous().lineno
 			right = self.addterm()
-			relterm = Binary(op, relterm, right)
+			relterm = Binary(op, relterm, right, lineno)
 		return relterm
 		
 	def addterm(self) -> Expression:
@@ -215,8 +234,9 @@ class Parser:
 		addterm = self.factor()
 		while self.match("DIVIDE") or self.match("TIMES"):
 			op = self.previous().value
+			lineno = self.previous().lineno
 			right = self.factor()
-			addterm = Binary(op, addterm, right)
+			addterm = Binary(op, addterm, right, lineno)
 		return addterm
 		
 	# def binary_op(self, operators, next_rule):
@@ -232,18 +252,17 @@ class Parser:
 		
 		if self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"):
 			if self.isLiteral(self.previous()):
-				return Literal(self.previous().value, self.previous().type.lower())
+				return Literal(self.previous().value, self.previous().type.lower(), self.previous().lineno)
 			else:
 				type = self.previous().value
 				self.consume("LPAREN", "Se esperaba un parentesis izquierdo '('")
 				expr = self.expression()
 				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
-				return TypeConversion(type, expr)
+				return TypeConversion(type, expr, self.previous().lineno)
 		elif self.match("PLUS") or self.match("MINUS") or self.match("GROW"):
-			return Unary(self.previous().value, self.expression())
+			return Unary(self.previous().value, self.expression(), self.previous().lineno)
 		elif self.match("LPAREN"):
 			expr = self.expression()
-			# print(expr)
 			self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
 			return expr
 		# elif self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"): # Para type
@@ -254,20 +273,22 @@ class Parser:
 		# 	return TypeConversion(type, expr)
 		elif self.match("ID"):
 			id = self.previous().value
+			lineno = self.previous().lineno
 			if self.tokens[self.current].type == "LPAREN":
 				self.consume("LPAREN", "Se esperaba un perentesis izquierdo '('")
 				args = []
 
 				if self.match('RPAREN'):
-					return FuncCall(id, args)
+					return FuncCall(id, args, lineno)
 				
 				args = self.arguments()
 				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
-				return FuncCall(id, args)
+				return FuncCall(id, args, lineno)
 			else:
-				return LocationPrimi(id)
+				return LocationPrimi(id, lineno)
 		elif self.match("DEREF"):
-			return LocationMem(self.expression())
+			lineno = self.previous().lineno
+			return LocationMem(self.expression(), lineno)
 		else:
 			raise SyntaxError(f"Línea {self.peek().lineno}: Factor inesperado \n")
 
@@ -275,6 +296,7 @@ class Parser:
 	def parameters(self) -> List[Parameter]:
 
 		params = []
+		lineno = self.previous().lineno
 		if self.peek() and self.peek().type == "ID":
             # Primer parámetro
 			name = self.consume("ID", "Se esperaba un identificador para el parámetro").value
@@ -285,15 +307,17 @@ class Parser:
 			else:
 				type_str = self.consume("INT", "Se esperaba un tipo para el parámetro").value
 
-			params.append(Parameter(name=name, type=type_str))
+			
+			params.append(Parameter(name, type_str, lineno))
             # Parámetros adicionales separados por coma
 			while self.match("COMMA"):
 				name = self.consume("ID", "Se esperaba un identificador para el parámetro").value
+				lineno = self.previous().lineno
 				if self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"):
 					type_str = self.previous().value
 				else:
 					type_str = self.consume("INT", "Se esperaba un tipo para el parámetro").value
-				params.append(Parameter(name=name, type=type_str))
+				params.append(Parameter(name, type_str, lineno))
 		return params
 
 

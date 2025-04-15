@@ -347,12 +347,17 @@ class Parser:
 import json
 
 def ast_to_dict(node):
-	if isinstance(node, list):
-		return [ast_to_dict(item) for item in node]
-	elif hasattr(node, "__dict__"):
-		return {key: ast_to_dict(value) for key, value in node.__dict__.items()}
-	else:
-		return node
+    if isinstance(node, list):
+        return [ast_to_dict(item) for item in node]
+    elif hasattr(node, '__dict__'):
+        # Tomar el nombre de la clase como "type"
+        d = {"class": node.__class__.__name__}
+        # Convertir cada atributo
+        for key, value in node.__dict__.items():
+            d[key] = ast_to_dict(value)
+        return d
+    else:
+        return node
 
 
 if __name__ == '__main__':

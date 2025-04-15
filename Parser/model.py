@@ -7,8 +7,8 @@ class Visitor(metaclass=multimeta):
 
 @dataclass
 class Node:
-  def accept(self, v:Visitor):
-    return v.visit(self)
+  def accept(self, v:Visitor, env):
+    return v.visit(self, env)
   
 
 @dataclass
@@ -136,6 +136,7 @@ class Funcdecl(Statement):
 #     'c'          (Carácter)
 @dataclass
 class Literal(Expression):
+  value: str
   type: str
 
 # 3.2 Binary Operators

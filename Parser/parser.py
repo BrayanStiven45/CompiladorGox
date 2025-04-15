@@ -1,13 +1,5 @@
 from typing import List
 from dataclasses import dataclass
-from model import ( 
-	Assignment, Program, Statement, Location,
-	BreakStmt, ContinueStmt, Binary, Literal,
-	Unary, TypeConversion, FuncCall, Vardecl,
-	Funcdecl, Parameter, Expression, IfStmt,
-	PrintStmt, WhileStmt, ReturnStmt, LocationMem,
-	LocationPrimi
-)
 import sys
 import os
 
@@ -15,6 +7,7 @@ from rich import print
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from Analizador_lexico.analizador_lexico import Token, Tokenize
+from Parser.model import *
 
 
 
@@ -22,7 +15,14 @@ from Analizador_lexico.analizador_lexico import Token, Tokenize
 # Implementación del Parser
 # -------------------------------
 class Parser:
-	def __init__(self, tokens: List[Token]):
+	# def __init__(self, tokens: List[Token]):
+	# 	self.tokens = tokens
+	# 	self.current = 0
+
+	def __init__(self, name: str):
+		tokenize = Tokenize()
+
+		tokens = tokenize.main(name)
 		self.tokens = tokens
 		self.current = 0
 
@@ -54,8 +54,10 @@ class Parser:
 		elif self.match("WHILE"):
 			return self.while_stmt()
 		elif self.match("BREAK"):
+			self.consume("SEMI", "Se esperaba un signo de punto y coma ';'") #Verificar si se debe consumir un punto y coma
 			return BreakStmt()
 		elif self.match("CONTINUE"):
+			self.consume("SEMI", "Se esperaba un signo de punto y coma ';'") #Verificar si se debe consumir un punto y coma
 			return ContinueStmt()
 		elif self.match("RETURN"):
 			return self.return_stmt()
@@ -63,7 +65,7 @@ class Parser:
 			return self.print_stmt()
 		else:
 			print(self.tokens[self.current])
-			raise SyntaxError(f"Línea {self.peek().lineno}: Declaración inesperada")
+			raise SyntaxError(f"Línea {self.peek().lineno}: Declaración inesperada \n")
 			
 	def assignment(self) -> Assignment:
 		location = None
@@ -89,12 +91,21 @@ class Parser:
 		name = self.consume("ID", "Se esperaba un identificador").value
 		type = None
 		expr = None
+		#Verificar que lo que sigue de un ID sea un tipo valido o un assign o punto y coma
 		if self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"): # Para type
 			type = self.previous().value
-
+		
+		# Si la varible no esta tipada se arroja una excepción
+		if kind == 'var' and type is None:
+			raise SyntaxError(f"Línea {self.peek().lineno}: La varible debe ser tipada \n")
+		
+		if kind == 'const' and type != None:
+			raise SyntaxError(f"Línea {self.peek().lineno}: La varible constante no debe tener tipado \n")
+			
 		if self.match("ASSIGN"):
 			expr = self.expression()
 		
+
 		self.consume("SEMI", "Se esperaba un punto y como ';'")
 
 		return Vardecl(kind, type, name, expr)
@@ -112,7 +123,7 @@ class Parser:
 		param = self.parameters()
 		self.consume("RPAREN", "Se esperaba un parentesis derecho ')' ")
 		return_type = self.advance().value
-		print(self.tokens[self.current])
+
 		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 		stat = []
 		while self.peek().type != "RBRACE":
@@ -211,10 +222,23 @@ class Parser:
 	# def binary_op(self, operators, next_rule):
 	# 	pass
 		
+	def isLiteral(self, token: Token) -> bool:
+		if token.type != token.value.upper():
+			return True
+		
+		return False
+
 	def factor(self) -> Expression:
 		
-		if self.match("INTEGER") or self.match("FLOATING") or self.match("CHARACTER") or self.match("TRUE") or self.match("FALSE"):
-			return Literal(self.previous().value)
+		if self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"):
+			if self.isLiteral(self.previous()):
+				return Literal(self.previous().value, self.previous().type.lower())
+			else:
+				type = self.previous().value
+				self.consume("LPAREN", "Se esperaba un parentesis izquierdo '('")
+				expr = self.expression()
+				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
+				return TypeConversion(type, expr)
 		elif self.match("PLUS") or self.match("MINUS") or self.match("GROW"):
 			return Unary(self.previous().value, self.expression())
 		elif self.match("LPAREN"):
@@ -222,16 +246,21 @@ class Parser:
 			# print(expr)
 			self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
 			return expr
-		elif self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"): # Para type
-			type = self.previous().value
-			self.consume("LPAREN", "Se esperaba un parentesis izquierdo '('")
-			expr = self.expression()
-			self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
-			return TypeConversion(type, expr)
+		# elif self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"): # Para type
+		# 	type = self.previous().value
+		# 	self.consume("LPAREN", "Se esperaba un parentesis izquierdo '('")
+		# 	expr = self.expression()
+		# 	self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
+		# 	return TypeConversion(type, expr)
 		elif self.match("ID"):
 			id = self.previous().value
 			if self.tokens[self.current].type == "LPAREN":
 				self.consume("LPAREN", "Se esperaba un perentesis izquierdo '('")
+				args = []
+
+				if self.match('RPAREN'):
+					return FuncCall(id, args)
+				
 				args = self.arguments()
 				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
 				return FuncCall(id, args)
@@ -240,7 +269,7 @@ class Parser:
 		elif self.match("DEREF"):
 			return LocationMem(self.expression())
 		else:
-			raise SyntaxError(f"Línea {self.peek().lineno}: Factor inesperado")
+			raise SyntaxError(f"Línea {self.peek().lineno}: Factor inesperado \n")
 
 			
 	def parameters(self) -> List[Parameter]:
@@ -249,12 +278,21 @@ class Parser:
 		if self.peek() and self.peek().type == "ID":
             # Primer parámetro
 			name = self.consume("ID", "Se esperaba un identificador para el parámetro").value
-			type_str = self.consume("INT", "Se esperaba un tipo para el parámetro").value
+
+			type_str = None
+			if self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"):
+				type_str = self.previous().value
+			else:
+				type_str = self.consume("INT", "Se esperaba un tipo para el parámetro").value
+
 			params.append(Parameter(name=name, type=type_str))
             # Parámetros adicionales separados por coma
 			while self.match("COMMA"):
 				name = self.consume("ID", "Se esperaba un identificador para el parámetro").value
-				type_str = self.consume("INT", "Se esperaba un tipo para el parámetro").value
+				if self.match("INT") or self.match("FLOAT") or self.match("CHAR") or self.match("BOOL"):
+					type_str = self.previous().value
+				else:
+					type_str = self.consume("INT", "Se esperaba un tipo para el parámetro").value
 				params.append(Parameter(name=name, type=type_str))
 		return params
 
@@ -297,23 +335,13 @@ class Parser:
 	def consume(self, token_type: str, message: str):
 		if self.match(token_type):
 			return self.previous()
-		raise SyntaxError(f"Línea {self.peek().lineno}: {message}")
+		
+		if self.peek() is None:
+			self.current -= 1
+		
+		raise SyntaxError(f"Línea {self.peek().lineno}: {message} \n")
 	
-	
-# -------------------------------
-# Prueba del Parser con Tokens
-# -------------------------------
-# tokens = [
-# ]
 
-tokenize = Tokenize()
-
-tokens = tokenize.main('prueba.gox')
-
-parser = Parser(tokens)
-ast = parser.parse()
-
-print(ast)
 
 # Convertir el AST a una representación JSON para mejor visualización
 import json
@@ -327,15 +355,26 @@ def ast_to_dict(node):
 		return node
 
 
+if __name__ == '__main__':
+	import sys
 
-ast_json = json.dumps(ast_to_dict(ast), indent=4)
+	name = None
+	if len(sys.argv) == 2:
+		name = sys.argv[1]
+	else:
+		name = sys.argv[0]
 
-# Guardar el AST como JSON
-ast_file_path = "ast_updated.json"
-with open(ast_file_path, "w", encoding="utf-8") as f:
-	f.write(ast_json)
+	parser = Parser(name)
+	ast = parser.parse()
 
-# Proporcionar el enlace de descarga
-ast_file_path
+	print(ast)
 
+	ast_json = json.dumps(ast_to_dict(ast), indent=4)
 
+	# Guardar el AST como JSON
+	ast_file_path = "Parser/ast_updated.json"
+	with open(ast_file_path, "w", encoding="utf-8") as f:
+		f.write(ast_json)
+
+	# Proporcionar el enlace de descarga
+	ast_file_path

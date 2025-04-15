@@ -88,34 +88,37 @@ class Tokenize:
                 if value:
                     identifier = value.group()
                     if identifier in KEYWORDS:
-                        yield Token(identifier.upper(), identifier, lineno) # Return the token with the type of the keyword
+                        if identifier == 'true' or identifier == 'false':
+                            yield Token('BOOL', identifier, lineno)
+                        else:
+                            yield Token(identifier.upper(), identifier, lineno) # Return the token with the type of the keyword
                     else:
                         yield Token('ID', identifier, lineno) # Return the token with the type ID
                     pos = value.end()
                 else:
-                    self.prinError(text[pos], lineno)
+                    self.printError(text[pos], lineno)
                     pos += 1
 
             elif text[pos].isdigit() or text[pos] == ".": # Validates if it is a floating point or integer
                 value = FLOAT_PAT.match(text, pos)
                 if value:
-                    yield Token('FLOATING', value.group(), lineno) # Return the token with the type FLOAT
+                    yield Token('FLOAT', value.group(), lineno) # Return the token with the type FLOAT
                     pos = value.end()
                 else:
                     value = INT_PAT.match(text, pos)
                     if value:
-                        yield Token('INTEGER', value.group(), lineno) # Return the token with the type INTEGER
+                        yield Token('INT', value.group(), lineno) # Return the token with the type INTEGER
                         pos = value.end()
                     else:
-                        self.prinError(text[pos], lineno)
+                        self.printError(text[pos], lineno)
                         pos += 1
             elif text[pos] == '\'':
                 value = CHAR_PAT.match(text,pos)
                 if value:
-                    yield Token('CHARACTER', value.group(), lineno) # Return the token with the type CHAR
+                    yield Token('CHAR', value.group(), lineno) # Return the token with the type CHAR
                     pos = value.end()
                 else:
-                    self.prinError(text[pos], lineno)
+                    self.printError(text[pos], lineno)
                     pos += 1
             elif text[pos:pos+2] in TWO_CHAR:
                 simbol = text[pos:pos+2]
@@ -126,7 +129,7 @@ class Tokenize:
                 yield Token(ONE_CHAR[simbol], simbol, lineno) # Return the token with the type of the one-character symbol
                 pos += 1
             else:
-                self.prinError(text[pos], lineno)
+                self.printError(text[pos], lineno)
                 pos += 1
 
     # Print the errors
@@ -163,4 +166,12 @@ class Tokenize:
 # Run the main function
 if __name__ == '__main__':
     import sys
-    Tokenize.main(sys.argv) # Call the main function with the arguments passed to the program
+    argv = None
+    if len(sys.argv) == 2:
+        argv = sys.argv[1]
+    else:
+        argv = sys.argv[0]
+    print("Hollaaaaa", argv)    
+
+    tokenize = Tokenize() # Create an instance of the Tokenize class
+    tokenize.main(argv) # Call the main function with the arguments passed to the program

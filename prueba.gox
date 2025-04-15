@@ -60,7 +60,21 @@ print(int(spam) * int(pi));*/
 
 // Octava Prueba
 
-var x int = ^8192;      // Incrementa memoria por 8192 bytes
-var addr int = 1234;
-`addr = 5678;           // Almacena 5678 en addr
-print(`addr + 8);
+// var x integer= 4; Prabar el parser para esta ocaciones
+
+// var x int += (2.5 + 2.5) + 2.5; Prabar el parser para esta ocaciones
+
+
+var memsize int = ^1000;
+const addr = 500;
+
+`addr = 1234;          // Stores 1234 at memory address addr
+print `addr + 0;       // Reads 1234 from memory address addr
+
+`addr = 12.34;         // Stores 12.34
+print `addr + 0;
+
+`addr = 'H';
+`4 + 5 = 5;
+print char(`addr);
+print '\n';

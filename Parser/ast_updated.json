@@ -1,0 +1,22 @@
+{
+    "stmts": [
+        {
+            "kind": "var",
+            "type": null,
+            "name": "x",
+            "value": {
+                "value": "5",
+                "type": "int"
+            }
+        },
+        {
+            "location": {
+                "name": "x"
+            },
+            "expression": {
+                "value": "4.5",
+                "type": "float"
+            }
+        }
+    ]
+}

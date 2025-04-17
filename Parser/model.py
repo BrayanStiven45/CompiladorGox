@@ -61,8 +61,8 @@ class PrintStmt(Statement):
 class IfStmt(Statement):
   condition: Expression
   consequence: List[Statement]
-  alternative: List[Statement]
   lineno: int
+  alternative: List[Statement] = None
 
 # 1.4 While Loop
 #     while test { body }

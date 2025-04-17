@@ -128,7 +128,12 @@ class Parser:
 		self.consume("LPAREN", "Se esperaba un parentesis izquierdo '(' ")
 		param = self.parameters()
 		self.consume("RPAREN", "Se esperaba un parentesis derecho ')' ")
-		return_type = self.advance().value
+
+		# Mejorar esta parte de validar tipos
+		token = self.advance()
+		if self.isLiteral(token):
+			raise SyntaxError(f"Línea {token.lineno}: Se esperaba un tipo de retorno válido para la función {token.value}\n")
+		return_type = token.value
 
 		if is_import:
 			self.consume("SEMI", "Se esperaba un punto y coma ';'")
@@ -154,14 +159,16 @@ class Parser:
 			conseq.append(self.statement())
 		self.match("RBRACE")
 
-		alter = [] #Alternativa
 		if self.match("ELSE"):
+			alter = [] #Alternativa
 			self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 			while self.peek().type != "RBRACE":
 				alter.append(self.statement())
 			self.match("RBRACE")
+
+			return IfStmt(expr, conseq, lineno, alter)
 		
-		return IfStmt(expr, conseq, alter, lineno)
+		return IfStmt(expr, conseq, lineno, None)
 
 	def while_stmt(self) -> WhileStmt:
 		

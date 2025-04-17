@@ -34,33 +34,6 @@ bin_ops = {
 	('int', '==', 'int') : 'bool',
 	('int', '!=', 'int') : 'bool',
 
-	# #Integer with Float Operations
-	# ('int', '+', 'float') : 'float',
-	# ('int', '-', 'float') : 'float',
-	# ('int', '*', 'float') : 'float',
-	# ('int', '/', 'float') : 'float',
-
-	# ('int', '<', 'float')  : 'bool',
-	# ('int', '<=', 'float') : 'bool',
-	# ('int', '>', 'float')  : 'bool',
-	# ('int', '>=', 'float') : 'bool',
-	# ('int', '==', 'float') : 'bool',
-	# ('int', '!=', 'float') : 'bool',
-
-	# #Float with integer Operations
-	# ('float', '+', 'int') : 'float',
-	# ('float', '-', 'int') : 'float',
-	# ('float', '*', 'int') : 'float',
-	# ('float', '/', 'int') : 'float',
-
-	# ('float', '<', 'int')  : 'bool',
-	# ('float', '<=', 'int') : 'bool',
-	# ('float', '>', 'int')  : 'bool',
-	# ('float', '>=', 'int') : 'bool',
-	# ('float', '==', 'int') : 'bool',
-	# ('float', '!=', 'int') : 'bool',
-
-
 	# Float operations
 	('float', '+', 'float') : 'float',
 	('float', '-', 'float') : 'float',

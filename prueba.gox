@@ -1,80 +1,120 @@
-// Primera Pruba
-/*print 2 + 3 * -4;
-print 2.0 - 3.0 / -4.0;
-print -2 + 3;*/
-
-// Segunda Prueba
-/*const pi = 3.14159;
-var tau float;
-tau = 2.0 * pi;
-print tau;*/
-
-// Tercera Prueba
-/*var a int = 2;
-var b int = 3;
-if a < b {
-    print a;
-} else {
-    print b;
-}*/
-
-// Cuarta Prueba
-/*const n = 10;
-var x int = 1;
-var fact int = 1;
-
-while x < n {
-    fact = fact * x;
-    print fact;
-    x = x + 1;
-}*/
-
-// Quinta Prueba
-/*func square(x int) int {
-    return x*x;
-}
-
-print square(4);
-print square(10);*/
-
-// Sexta Prueba
-/*func fact(n int) int {
-    var x int = 1;
-    var result int = 1;
-    while x < n {
-        result = result * x;
-        x = x + 1;
-    }
-    return result;
-}
-
-print(fact(10));*/
-
-// Septima Prueba
-/*var pi = 3.14159;
-var spam = 42;
-
-print(spam * int(pi));
-print(float(spam) * pi);
-print(int(spam) * int(pi));*/
-
-// Octava Prueba
-
 // var x integer= 4; Prabar el parser para esta ocaciones
+// El simbolo ! no lo dectecta el lexer
 
+// Primera prueba de error se tienen algunas dudas al respecto de como el compilador
+// dectecta los errores en donde dice verificar
+/* // print 2 + 2.5;      2
+print -'h';           // Type error (- char) Organizar el checker
 
-var x float = 3.14;
+//var x;           1     
+//var x int = 2.5;     3
+var y int;
+//var y int;           4
 
-func fib(n int) int {
-	if n <= 1 { 
-		return 1;
-	}
-	return fib(n-1) + fib(n-2);
+var z int;
+// z = 4.5;            5
+//w = 4.5;             6  // Bad assignment (undefined name)
+
+const pi = 3.14159;
+// pi = 2.71828;       7  // Can't assign to const
+
+// 8 Bad condition. Test isn't a boolean
+if true {
+
+} else {
+
 }
 
-func main() int {
-	var n int = 12;
+// 9 Bad loop. Test isn't a boolean
 
-	print fib(n);
+while true {
+
+}
+
+// Use of type names in the wrong place
+// print int;            // Can't load from int (not a variable)  Verificar
+//int = 2;              // Can't assign to int (not a variable) Verificar
+
+// var int d;            // Type name/variable name swapped. "d" is not a type. Verificar
+
+// Break/continue used outside of a loop
+// 10 break;
+// 11 continue;
+ */
+
+func f(x int, y int) int {
+   return x + y;
+}
+
+var result int;
+// result = f(2);        1   // Wrong number of arguments -------------------
+// result = f(2, 3.5);   2 // Type error in argument 2--------------------
+
+var fresult float;
+// fresult = f(2, 3);    3 // Type error in assignment (function returns float)--------------
+// fresult = spam();     4 // Undefined function spam--------------
+
+// Missing return statement.
+// 8-----------------------------------------------
+/*func g(x int) int {
+   print x;
+}*/
+
+// Type error in return.  Expects an "int"
+// Mostrar mejor este error
+/*func h(x int) int {
+   return 2.5;
+}*/
+
+// return 2;   5 // Return used outside of a function------------------------------
+
+
+func j(x int) int {
+    // Error. Nested functions are not supported.
+    // 10 ----------------------------------------------
+    /*func k(y int) int {
+        return x + y;
+    }*/
+    //return k(2);      11 // ????? k not defined (probably) ------------------------------------
+    return 2;
+}
+
+// Bad parameter (type and name are swapped)
+//func w(int x) int {  // Verificar
+  // return 1;
+//}
+
+// Unknown return type (real)
+// Resolvar para este problema
+// Resuelto
+// 6------------------------------------
+/*func t(x int) real {
+    return 0.0;
+}*/
+
+// Inconsistent return
+// 7------------------------------------------
+/*func s(x int) int {
+    if x > 0 {
+        return 2;
+    } else {
+        return 2.5;
+    }
+}*/
+
+// Missing return
+// 9 ---------------------------------------------------
+func u(x int) int {
+    if x > 0 {
+        return 2;
+    }else{
+        if x > 0{
+            return 2;
+        }else{
+            return 2;
+        }
+        
+    }
+    
 }
 

@@ -1,14 +1,3 @@
-# check.py
-'''
-Este archivo contendrá la parte de verificación/validación de tipos
-del compilador.  Hay varios aspectos que deben gestionarse para
-que esto funcione. Primero, debe tener una noción de "tipo" en su compilador.
-Segundo, debe administrar los entornos y el alcance para manejar los
-nombres de las definiciones (variables, funciones, etc.).
-
-Una clave para esta parte del proyecto es realizar pruebas adecuadas.
-A medida que agregue código, piense en cómo podría probarlo.
-'''
 from rich    import print
 from typing  import Union
 
@@ -66,19 +55,6 @@ class Checker(Visitor):
 
 		
 		type2 = n.expression.accept(self, env)
-
-		# # Si la variable esta declarad pero no fue declaracada con 
-		# # un tipo de dato
-		# if type1.type is None: 
-		# 	type1.type = type2
-		# 	env.modify_table(name_loc, type1)
-		
-
-		# Si los tipos de datos de la variable y de la expresion no son iguales
-		# entonces arroja un exepción
-		
-		# if check_binop('=', type1, type2) is None:
-		# 	raise Exception(f'Error: No se puede asignar el tipo {type2} a la variable \'{name_loc}\' de tipo {type1} \n')	
 		
 		if type2 in typenames and type2 == type1:
 			return True
@@ -106,11 +82,13 @@ class Checker(Visitor):
 
 		for cons in n.consequence:
 			cons.accept(self, if_env)
-		
-		else_env = Symtab('elseSymbol', env)
 
-		for alt in n.alternative:
-			alt.accept(self, else_env)
+		if not (n.alternative is None):
+		
+			else_env = Symtab('elseSymbol', env)
+
+			for alt in n.alternative:
+				alt.accept(self, else_env)
 
 			
 	def visit(self, n:WhileStmt, env:Symtab):
@@ -147,14 +125,15 @@ class Checker(Visitor):
 		while env_apo.name != 'global':
 			if env_apo.name == 'funcSymbol':
 				type1 = n.expression.accept(self, env)
-				if type1 == env.get('func').type:
+				type2 = env.get('func').type
+				if type1 == type2:
 					return True
 				else:
-					raise Exception(f'ReturnError: Linea {n.lineno}: El retorno debe coincidir con el tipo de retorno declarado en la función')
+					raise Exception(f'ReturnError: Linea {n.lineno}: El retorno debe coincidir con el tipo de retorno declarado en la función: {type1} != {type2}\n')
 			
 			env_apo = env_apo.parent
 		
-		raise Exception(f'ReturnError: Linea {n.lineno}: El retorno solo se puede usar dentro de una función')
+		raise Exception(f'ReturnError: Linea {n.lineno}: El retorno solo se puede usar dentro de una función \n')
 		
 	
 	# Declarations
@@ -163,11 +142,6 @@ class Checker(Visitor):
 		'''
 		1. Agregar n.name a la TS actual
 		'''
-		# # Si el tipo de variable no fue definido, 
-		# # se asigna el tipo de la expresion
-		# if n.type is None:
-		# 	if not (n.value is None):
-		# 		n.type = n.value.type
 
 		if n.value is None:
 
@@ -182,7 +156,33 @@ class Checker(Visitor):
 
 			
 		env.add(n.name, n)
-		
+	
+	def function_has_return(self, stmts):
+		"""
+		Recorre una lista de sentencias y determina si se garantiza 
+		la ejecución de un ReturnStmt en todos los caminos.
+		"""
+		guaranteed_return = False
+
+		for stmt in stmts:
+			# Si la sentencia es un retorno, ese camino asegura un return.
+			if isinstance(stmt, ReturnStmt):
+				return True
+
+			# Si la sentencia es un IfStmt, revisamos ambos caminos.
+			elif isinstance(stmt, IfStmt):
+				# Verificar que en la parte "then" haya return.
+				then_has_return = self.function_has_return(stmt.consequence)
+				# Verificar que la rama "else" exista y tenga return.
+				else_has_return = self.function_has_return(stmt.alternative) if stmt.alternative else False
+
+				# Solo si ambos caminos retornan, ese if garantiza return.
+				if then_has_return and else_has_return:
+					guaranteed_return = True
+
+
+		return guaranteed_return
+
 
 	def visit(self, n:Funcdecl, env:Symtab):
 		'''
@@ -191,6 +191,9 @@ class Checker(Visitor):
 		3. Agregar todos los n.params dentro de la TS
 		4. Visitar n.stmts
 		'''
+		if env.name != 'global':
+			raise Exception(f'FuncDeclError: Linea {n.lineno}: La función solo se puede declarar en el ámbito global \n')
+
 		env.add(n.name, n)
 		func_env = Symtab('funcSymbol',env)
 		func_env.add('func', n)
@@ -200,6 +203,10 @@ class Checker(Visitor):
 		
 		for stmt in n.statements:
 			stmt.accept(self, func_env)
+
+		if not self.function_has_return(n.statements):
+			raise Exception(f'FunctionError: Linea {n.lineno}: La función \'{n.name}\' no garantiza siempre retorno \n')
+
 
 	def visit(self, n:Parameter, env:Symtab):
 		'''
@@ -234,7 +241,13 @@ class Checker(Visitor):
 		2. validar si es un operador unario valido
 		'''
 		type1 = n.expression.accept(self, env)
-		return check_unaryop(n.oper, type1)
+
+		check = check_unaryop(n.oper, type1) 
+
+		if check is None:
+			raise Exception(f'UnaryError: Linea {n.lineno}: Operación Unary incorrecto con tipo de dato \'{type1}\' \n')
+		
+		return check
 
 	def visit(self, n:TypeConversion, env:Symtab):
 		'''

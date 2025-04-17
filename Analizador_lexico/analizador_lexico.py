@@ -10,8 +10,8 @@ TWO_CHAR = { # Tokens with their respective grammar for two characters
     '>=': 'GE',
     '==': 'EQ',
     '!=': 'NE',
-    '&&': 'LAND',
-    '||': 'LOR',
+    '&&': 'AND',
+    '||': 'OR',
 }
 
 
@@ -56,12 +56,28 @@ errors = [] # List to store the errors in the file
 
 class Tokenize:
 
+    class LexerError(Exception):
+        def __init__(self, errors):
+            self.errors = errors
+            message = self.format_errors(errors)
+            super().__init__(message)
+
+        def format_errors(self, errors):
+            return "\nErrores léxicos encontrados:\n" + "\n".join(
+                f"  - Línea {line}: Token inválido '{char}'" for char, line in errors
+            )
+
+    def __init__(self):
+        self.errors = []
+
+
     def tokenize(self, text): # Function to tokenize the text
         lineno = 1 # Line number
         pos = 0 # Current position
 
         # Read the text character by character
         while pos < len(text):
+            
             if text[pos].isspace(): # Skip whitespaces, tabs and newlines
                 if text[pos] == '\n': # Count newlines
                     lineno += 1
@@ -74,7 +90,7 @@ class Tokenize:
                     pos = end + 2
                     continue
                 else:
-                    raise SyntaxError(f'Invalid token: Comment not closed at line {lineno}') # Error if the comment is not closed
+                    raise SyntaxError(f'Invalid token: Comment not closed at line {lineno} \n') # Error if the comment is not closed
             elif text[pos : pos+2] == '//': # Skip comments (// ...)
                 end = text.find('\n', pos+2)
                 if end >= 0:
@@ -96,7 +112,7 @@ class Tokenize:
                         yield Token('ID', identifier, lineno) # Return the token with the type ID
                     pos = value.end()
                 else:
-                    self.printError(text[pos], lineno)
+                    self.saveError(text[pos], lineno)
                     pos += 1
 
             elif text[pos].isdigit() or text[pos] == ".": # Validates if it is a floating point or integer
@@ -110,7 +126,7 @@ class Tokenize:
                         yield Token('INT', value.group(), lineno) # Return the token with the type INTEGER
                         pos = value.end()
                     else:
-                        self.printError(text[pos], lineno)
+                        self.saveError(text[pos], lineno)
                         pos += 1
             elif text[pos] == '\'':
                 value = CHAR_PAT.match(text,pos)
@@ -118,7 +134,7 @@ class Tokenize:
                     yield Token('CHAR', value.group(), lineno) # Return the token with the type CHAR
                     pos = value.end()
                 else:
-                    self.printError(text[pos], lineno)
+                    self.saveError(text[pos], lineno)
                     pos += 1
             elif text[pos:pos+2] in TWO_CHAR:
                 simbol = text[pos:pos+2]
@@ -129,13 +145,17 @@ class Tokenize:
                 yield Token(ONE_CHAR[simbol], simbol, lineno) # Return the token with the type of the one-character symbol
                 pos += 1
             else:
-                self.printError(text[pos], lineno)
+                self.saveError(text[pos], lineno)
                 pos += 1
 
-    # Print the errors
-    def printError(self, pos, lineno):
-        print(f'SyntaxError: Invalid token: {pos} at line {lineno}')
-        lineno += 1
+    # # Print the errors
+    # def printError(self, pos, lineno):
+    #     print(f'SyntaxError: Invalid token: {pos} at line {lineno}')
+    #     lineno += 1
+
+    def saveError(self, pos, lineno):
+        self.errors.append((pos, lineno))
+
 
     # Print table
     def printToken(self, toks):
@@ -161,6 +181,10 @@ class Tokenize:
                 tokens.append(token)
         
         self.printToken(tokens) # Print the tokens in a table format
+        
+        if self.errors:
+            raise self.LexerError(self.errors)
+
         return tokens
 
 # Run the main function

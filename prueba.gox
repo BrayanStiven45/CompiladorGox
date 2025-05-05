@@ -1,120 +1,65 @@
-// var x integer= 4; Prabar el parser para esta ocaciones
-// El simbolo ! no lo dectecta el lexer
+/* mandelplot.gox */
 
-// Primera prueba de error se tienen algunas dudas al respecto de como el compilador
-// dectecta los errores en donde dice verificar
-/* // print 2 + 2.5;      2
-print -'h';           // Type error (- char) Organizar el checker
+//import func put_image(base int, width int, height int) int; hay que arreglarlo
 
-//var x;           1     
-//var x int = 2.5;     3
-var y int;
-//var y int;           4
+const xmin = -2.0;
+const xmax = 1.0;
+const ymin = -1.5;
+const ymax = 1.5;
+const threshhold = 1000;
 
-var z int;
-// z = 4.5;            5
-//w = 4.5;             6  // Bad assignment (undefined name)
+var a int;
 
-const pi = 3.14159;
-// pi = 2.71828;       7  // Can't assign to const
-
-// 8 Bad condition. Test isn't a boolean
-if true {
-
-} else {
-
+func in_mandelbrot(x0 float, y0 float, n int) bool {
+	var x float = 0.0;
+	var y float = 0.0;
+	var xtemp float;
+	while n > 0 {
+		xtemp = x*x - y*y + x0;
+		y = 2.0*x*y + y0;
+		x = xtemp;
+		n = n - 1;
+		if x*x + y*y > 4.0 {
+			return false;
+		}
+	}
+	return true;
 }
 
-// 9 Bad loop. Test isn't a boolean
+func mandel(width int, height int) int {
+	var dx float = (xmax - xmin)/float(width);
+	var dy float = (ymax - ymin)/float(height);
+	var ix int = 0;
+	var iy int = height-1;
+	var addr int = 0;
+	var memsize int = ^(width*height*4);
 
-while true {
-
+	while iy >= 0 {
+		ix = 0;
+		while ix < width {
+			if in_mandelbrot(float(ix)*dx+xmin, float(iy)*dy+ymin, threshhold) {
+				`addr = '\xff';
+				`(addr+1) = '\x00';
+				`(addr+2) = '\x00';
+				`(addr+3) = '\xff';
+			} else {
+				`addr = '\xff';
+				`(addr+1) = '\xff';
+				`(addr+2) = '\xff';
+				`(addr+3) = '\xff';
+			}
+			addr = addr + 4;
+			ix = ix + 1;
+		}
+		iy = iy - 1;
+	}
+	return 0;
 }
 
-// Use of type names in the wrong place
-// print int;            // Can't load from int (not a variable)  Verificar
-//int = 2;              // Can't assign to int (not a variable) Verificar
-
-// var int d;            // Type name/variable name swapped. "d" is not a type. Verificar
-
-// Break/continue used outside of a loop
-// 10 break;
-// 11 continue;
- */
-
-func f(x int, y int) int {
-   return x + y;
+func make_plot(width int, height int) int {
+	var result int = mandel(width, height);
+	return 0;
 }
 
-var result int;
-// result = f(2);        1   // Wrong number of arguments -------------------
-// result = f(2, 3.5);   2 // Type error in argument 2--------------------
 
-var fresult float;
-// fresult = f(2, 3);    3 // Type error in assignment (function returns float)--------------
-// fresult = spam();     4 // Undefined function spam--------------
-
-// Missing return statement.
-// 8-----------------------------------------------
-/*func g(x int) int {
-   print x;
-}*/
-
-// Type error in return.  Expects an "int"
-// Mostrar mejor este error
-/*func h(x int) int {
-   return 2.5;
-}*/
-
-// return 2;   5 // Return used outside of a function------------------------------
-
-
-func j(x int) int {
-    // Error. Nested functions are not supported.
-    // 10 ----------------------------------------------
-    /*func k(y int) int {
-        return x + y;
-    }*/
-    //return k(2);      11 // ????? k not defined (probably) ------------------------------------
-    return 2;
-}
-
-// Bad parameter (type and name are swapped)
-//func w(int x) int {  // Verificar
-  // return 1;
-//}
-
-// Unknown return type (real)
-// Resolvar para este problema
-// Resuelto
-// 6------------------------------------
-/*func t(x int) real {
-    return 0.0;
-}*/
-
-// Inconsistent return
-// 7------------------------------------------
-/*func s(x int) int {
-    if x > 0 {
-        return 2;
-    } else {
-        return 2.5;
-    }
-}*/
-
-// Missing return
-// 9 ---------------------------------------------------
-func u(x int) int {
-    if x > 0 {
-        return 2;
-    }else{
-        if x > 0{
-            return 2;
-        }else{
-            return 2;
-        }
-        
-    }
-    
-}
 

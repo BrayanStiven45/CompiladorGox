@@ -7,8 +7,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from Parser.model   import *
 from Parser.parser  import Parser
-from symtab  import Symtab
-from typesys import typenames, check_binop, check_unaryop
+from Checker.symtab  import Symtab
+from Checker.typesys import typenames, check_binop, check_unaryop
 
 
 class Checker(Visitor):
@@ -20,7 +20,12 @@ class Checker(Visitor):
 		'''
 		check = cls()
 		env = Symtab('global')
-		n.accept(check, env)
+		try:
+			n.accept(check, env)
+		except Exception as e:
+			print("Ocurrió un error en el Checker:", e)
+			sys.exit(1)
+			
 		return check, env
 
 
@@ -326,12 +331,12 @@ class Checker(Visitor):
 
 		return type
 
-nodes = Parser('prueba.gox')
+if __name__ == '__main__':
+	nodes = Parser('prueba.gox')
 
-ast = nodes.parse()
-print(ast)
+	ast = nodes.parse()
 
-check = Checker()
-_, env = check.check(ast)
+	check = Checker()
+	_, env = check.check(ast)
 
-env.print()
+	env.print()

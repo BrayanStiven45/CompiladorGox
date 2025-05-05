@@ -2,6 +2,7 @@ import re
 from dataclasses import dataclass
 from rich.table   import Table
 from rich.console import Console
+from rich    import print
 
 # Define the tokens for the language 
 
@@ -172,6 +173,7 @@ class Tokenize:
         console.print(table)
 
     # Main function
+    # @classmethod
     def main (self, argv):
         tokens = []
         # if len(argv) != 1: # Check the number of arguments passed to the program
@@ -184,6 +186,8 @@ class Tokenize:
         
         if self.errors:
             raise self.LexerError(self.errors)
+        
+        print('Analisis Lexico Correcto')
 
         return tokens
 
@@ -194,8 +198,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 2:
         argv = sys.argv[1]
     else:
-        argv = sys.argv[0]
-    print("Hollaaaaa", argv)    
+        argv = sys.argv[0]  
 
     tokenize = Tokenize() # Create an instance of the Tokenize class
     tokenize.main(argv) # Call the main function with the arguments passed to the program

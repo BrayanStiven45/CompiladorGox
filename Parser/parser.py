@@ -25,11 +25,18 @@ class Parser:
 		tokens = tokenize.main(name)
 		self.tokens = tokens
 		self.current = 0
+		self.typenames = { 'int', 'float', 'char', 'bool' }
 
 	def parse(self) -> Program:
-		statements = []
-		while self.peek() and self.peek().type != "EOF":
-			statements.append(self.statement())
+		try:
+			statements = []
+			while self.peek() and self.peek().type != "EOF":
+				statements.append(self.statement())
+		except Exception as e:
+			print("Ocurrió un error en el Parse:", e)
+			sys.exit(1)
+
+		print('Analisis Sintactico Correcto')
 		return Program(stmts = statements)
 
 	# -------------------------------
@@ -93,6 +100,9 @@ class Parser:
 		kind = self.previous().value
 		lineno = self.previous().lineno
 		
+		if self.peek().value in self.typenames:
+			raise SyntaxError(f"Línea {self.peek().lineno}: No se puede usar la palabra reservada '{self.peek().value}' como nombre de variable \n")
+
 		name = self.consume("ID", "Se esperaba un identificador").value
 		type = None
 		expr = None

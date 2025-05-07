@@ -10,6 +10,7 @@ from Checker.check import Checker
 from Codigo_Intermedio.IR import *
 
 try:
+
     nodes = Parser('prueba.gox')
     
     ast = nodes.parse()
@@ -21,11 +22,11 @@ try:
     
     env.print()
 
-    
+    module = IRCode.gencode(ast)
+        
+    module.dump()
 
 except Exception as e:
     print("Ocurrió un error:", e)
 
-module = IRCode.gencode(ast)
-    
-module.dump()
+

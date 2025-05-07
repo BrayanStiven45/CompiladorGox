@@ -43,7 +43,7 @@ KEYWORDS = { # Keywords of the language
 NAME_PAT = re.compile(r'[a-zA-Z_][a-zA-Z0-9_]*') # Regular expression for the identifier name
 FLOAT_PAT = re.compile(r'\d*\.(?:\d+)?(?:[eE][-+]?\d+)?') # Regular expression for the floating point number
 INT_PAT = re.compile(r'\d+') # Regular expression for the integer number
-CHAR_PAT = re.compile(r'\'([a-zA-Z]|\\[a-z]|\\x[0-9A-Fa-f]{2}|\\\')\'') # Regular expression for the character
+CHAR_PAT = re.compile(r'\'([\x20-\x7E]|[a-zA-Z]|\\[a-z]|\\x[0-9A-Fa-f]{2}|\\\')\'') # Regular expression for the character
 
 
 

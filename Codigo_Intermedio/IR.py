@@ -302,6 +302,7 @@ class IRCode(Visitor):
 	def visit(self, n:Binary, func:IRFunction):
 		
 		if n.op == '&&':
+			# Validar el circuito corto: A && B, si A es falso => no necesita evaluar B
 			...
 		elif n.op == '||':
 			...

@@ -52,16 +52,19 @@ class Checker(Visitor):
 				if symbol.kind == 'const':
 					raise Exception(f"AssignmentError: Linea {n.lineno}: No se puede asignar un valor a una constante '{n.location.name}' \n")
 
+		type2 = n.expr.accept(self, env)
+
 		# Si location es una asignación a memoria	
 		if isinstance(n.location, LocationMem):
+			n.location.accept(self, env)
+			n.location.usage = 'store'
+			n.location.type = type2
 			return True
 
 		type1 = n.location.accept(self, env)	
-
-		
-		type2 = n.expression.accept(self, env)
 		
 		if type2 in typenames and type2 == type1:
+			n.location.usage = 'store'
 			return True
 
 		raise Exception(f'AssigmentError: Linea {n.lineno}: No se puede asignar el tipo \'{type2}\' a la variable de tipo \'{type1}\' \n')	
@@ -71,7 +74,8 @@ class Checker(Visitor):
 		'''
 		1. visitar n.expr
 		'''
-		n.expression.accept(self, env)
+		print_type = n.expr.accept(self, env)
+		n.type = print_type
 
 
 	def visit(self, n:IfStmt, env:Symtab):
@@ -129,8 +133,9 @@ class Checker(Visitor):
 		env_apo = env
 		while env_apo.name != 'global':
 			if env_apo.name == 'funcSymbol':
-				type1 = n.expression.accept(self, env)
+				type1 = n.expr.accept(self, env)
 				type2 = env.get('func').type
+
 				if type1 == type2:
 					return True
 				else:
@@ -151,7 +156,7 @@ class Checker(Visitor):
 		if n.value is None:
 
 			if n.kind == 'const':
-				raise Exception('VarDeclError: Linea {n.lineno}: Se debe inicializar la variable constante')
+				raise Exception(f'VarDeclError: Linea {n.lineno}: Se debe inicializar la variable constante')
 			
 		else:
 			type2 = n.value.accept(self, env)
@@ -163,10 +168,10 @@ class Checker(Visitor):
 		env.add(n.name, n)
 	
 	def function_has_return(self, stmts):
-		"""
-		Recorre una lista de sentencias y determina si se garantiza 
-		la ejecución de un ReturnStmt en todos los caminos.
-		"""
+		
+		# Recorre una lista de sentencias y determina si se garantiza 
+		# la ejecución de un ReturnStmt en todos los caminos.
+		
 		guaranteed_return = False
 
 		for stmt in stmts:
@@ -209,7 +214,7 @@ class Checker(Visitor):
 		for stmt in n.statements:
 			stmt.accept(self, func_env)
 
-		if not self.function_has_return(n.statements):
+		if (not self.function_has_return(n.statements)) and (not n.is_import):
 			raise Exception(f'FunctionError: Linea {n.lineno}: La función \'{n.name}\' no garantiza siempre retorno \n')
 
 
@@ -234,43 +239,64 @@ class Checker(Visitor):
 		'''
 		type1 = n.left.accept(self, env)
 		type2 = n.right.accept(self, env)
-
-		if type1 != type2:
+		
+		if isinstance(n.left, LocationMem):
+			type1 = type2
+			n.left.type = type2
+		elif isinstance(n.right, LocationMem):
+			type2 = type1
+			n.right.type = type1
+		elif type1 != type2:
 			raise Exception(f'BinaryError: Linea {n.lineno}: No se puede hacer una operacion \'{n.op}\' entre \'{type1}\' y \'{type2}\' \n')
 		
-		return check_binop(n.op, type1, type2)
+		n.type = type1
+
+		type_bin = check_binop(n.op, type1, type2)
+
+		if type_bin is None:
+			raise Exception(f'BinaryError: Linea {n.lineno}: No se puede hacer una operacion \'{n.op}\' entre \'{type1}\' y \'{type2}\' \n')
+		
+		return type_bin
 		
 	def visit(self, n:Unary, env:Symtab):
 		'''
 		1. visitar n.expr
 		2. validar si es un operador unario valido
 		'''
-		type1 = n.expression.accept(self, env)
+		type1 = n.expr.accept(self, env)
 
-		check = check_unaryop(n.oper, type1) 
+		type_unary = check_unaryop(n.op, type1) 
 
-		if check is None:
+		if type_unary is None:
 			raise Exception(f'UnaryError: Linea {n.lineno}: Operación Unary incorrecto con tipo de dato \'{type1}\' \n')
+	
+		n.type = type_unary		
 		
-		return check
+		return type_unary
 
 	def visit(self, n:TypeConversion, env:Symtab):
 		'''
 		1. Visitar n.expr para validar
 		2. retornar el tipo del cast n.type
 		'''
-		type_expr = n.exp.accept(self, env)
+		type_expr = n.expr.accept(self, env)
 		type_conv = n.type
 
-		if type_conv == 'char':
+		if isinstance(n.expr, LocationMem):
+			n.expr.type = type_conv
 			return type_conv
 		
 		if type_expr == 'char':
 			raise Exception(f'TypeConvertionError: Linea {n.lineno}: No se puede convertir un tipo \'char\' a tipo \'{type_conv}\' \n')
-		
-		#Preguntar para booleanos
+
+		if (type_conv == 'char'):
+			if isinstance(n.expr, LocationMem):
+				return type_conv
+			else:
+				raise Exception(f'TypeConvertionError: Linea {n.lineno}: No se puede convertir un tipo \'{type_conv}\' a tipo \'char\', solo para leer de momoria\n')
 
 		return type_conv
+		
 
 
 
@@ -311,16 +337,17 @@ class Checker(Visitor):
 		2. Retornar el tipo
 		'''
 		name_loc = n.name
-		type1 = env.get(name_loc) # Nombre de la variable a la que se le asigna
+		variable = env.get(name_loc) # Nombre de la variable a la que se le asigna
 
-		if type1 is None:
+		if variable is None:
 			raise NameError(f'Linea {n.lineno}: La variable \'{name_loc}\' no existe \n')
 		
-		if type1.type is None:
-			type1.type = type1.value.accept(self, env)
+		if variable.type is None:
+			variable.type = variable.value.accept(self, env)
 		
-
-		return type1.type
+		n.type = variable.type
+		n.usage = 'load'
+		return variable.type
 
 	def visit(self, n:LocationMem, env:Symtab):
 		'''
@@ -329,7 +356,11 @@ class Checker(Visitor):
 		'''
 		type = n.expr.accept(self, env)
 
-		return type
+		if type != 'int':
+			raise Exception(f'LocationMemError: Linea {n.lineno}: La direccion de momoria debe de ser entera')
+
+		n.usage = 'load'
+		n.type = 'int'
 
 if __name__ == '__main__':
 	nodes = Parser('prueba.gox')

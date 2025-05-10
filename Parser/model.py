@@ -33,26 +33,28 @@ class Location(Node):
 # Para tipo '`'
 @dataclass
 class LocationMem(Location):
-  expression: Expression
+  expr: Expression
+  usage : str = None
 
 # Para tipo 'ID'
 @dataclass
 class LocationPrimi(Location):
   name: str
+  usage : str = None
 # 1.1 Assignment
 #
 #     location = expression ;
 @dataclass
 class Assignment(Statement):
   location : Location
-  expression : Expression
+  expr : Expression
 
 #
 # 1.2 Printing
 #     print expression ;
 @dataclass
 class PrintStmt(Statement):
-  expression: Expression
+  expr: Expression
 
 # 1.3 Conditional
 #     if test { consequence } else { alternative }
@@ -91,7 +93,7 @@ class ContinueStmt(Statement):
 #     return expresion ;
 @dataclass
 class ReturnStmt(Statement):
-  expression: Expression
+  expr: Expression
 
 # 2.1 Variables.  Las Variables pueden ser declaradas de varias formas.
 #
@@ -125,7 +127,6 @@ class Funcdecl(Statement):
   is_import: bool
   name: str
   parameters: List[Parameter]
-  return_type: str
   statements: List[Statement] #Esto debe ser o una lista de statements o un none
 
 # Observar bien esta clase como debe de ser y a quien debe de heredar
@@ -173,7 +174,7 @@ class Binary(Expression):
 @dataclass
 class Unary(Expression):
   op: str
-  expression : Expression
+  expr: Expression
 
 
 # 3.5 Conversiones de tipo
@@ -182,7 +183,7 @@ class Unary(Expression):
 @dataclass(kw_only=True)
 class TypeConversion(Expression):
   type: str
-  expression : Expression
+  expr : Expression
 
 # 3.6 Llamadas a función
 #     func(arg1, arg2, ..., argn)

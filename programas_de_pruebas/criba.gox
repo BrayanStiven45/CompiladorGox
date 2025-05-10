@@ -15,7 +15,7 @@ while i <= n {
 	i = i + 1;
 }
 
-// Criba de Eratostenes
+// Criba de Eratóstenes
 i = 2;
 while i * i <= n {
 	if `(base + i) == 1  {

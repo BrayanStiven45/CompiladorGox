@@ -84,7 +84,7 @@ class Parser:
 		if self.previous().type == "ID":
 			location = LocationPrimi(name = self.previous().value, lineno = self.previous().lineno)
 		elif self.previous().type == "DEREF":
-			location = LocationMem(expression = self.expression(), lineno = self.previous().lineno)
+			location = LocationMem(expr= self.expression(), lineno = self.previous().lineno)
 		self.consume("ASSIGN", "Se esperaba un signo igual '='")
 
 		expr = self.expression()
@@ -92,7 +92,7 @@ class Parser:
 
 		self.consume("SEMI", "Se esperaba un signo de punto y coma ';'")
 
-		return Assignment(location = location, expression = expr, lineno = lineno)
+		return Assignment(location = location, expr = expr, lineno = lineno)
 		
 	def vardecl(self) -> Vardecl:
 		
@@ -147,7 +147,7 @@ class Parser:
 		if is_import:
 			self.consume("SEMI", "Se esperaba un punto y coma ';'")
 
-			return Funcdecl(is_import = is_import, name = name, parameters = param, return_type = return_type, lineno = lineno, statements = [])
+			return Funcdecl(is_import = is_import, name = name, parameters = param, type = return_type, lineno = lineno, statements = [])
 
 		self.consume("LBRACE", "Se esperaba una llave izquierda '{' ")
 		stat = []
@@ -156,7 +156,7 @@ class Parser:
 		# stat = self.parse()
 		self.consume("RBRACE", "Se esperaba una llave derecha '}' ")
 
-		return Funcdecl(is_import = is_import, name = name, parameters = param, return_type = return_type, lineno = lineno, statements = stat)
+		return Funcdecl(is_import = is_import, name = name, parameters = param, type = return_type, lineno = lineno, statements = stat)
 		
 	def if_stmt(self) -> IfStmt:
 		
@@ -195,14 +195,14 @@ class Parser:
 		lineno = self.previous().lineno
 		expr = self.expression()
 		self.consume("SEMI", "Se esperaba un punto y coma ';'")
-		return ReturnStmt(expression = expr, lineno = lineno)
+		return ReturnStmt(expr = expr, lineno = lineno)
 		
 	def print_stmt(self):
 		
 		lineno = self.previous().lineno
 		expr = self.expression()
 		self.consume("SEMI", "Se esperaba un punto y coma ';'")
-		return PrintStmt(expression = expr, lineno = lineno)
+		return PrintStmt(expr = expr, lineno = lineno)
 		
 	# -------------------------------
 	# Análisis de expresiones
@@ -274,9 +274,9 @@ class Parser:
 				self.consume("LPAREN", "Se esperaba un parentesis izquierdo '('")
 				expr = self.expression()
 				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
-				return TypeConversion(type = type, expression = expr, lineno = self.previous().lineno)
+				return TypeConversion(type = type, expr = expr, lineno = self.previous().lineno)
 		elif self.match("PLUS") or self.match("MINUS") or self.match("GROW"):
-			return Unary(op = self.previous().value, expression = self.expression(), lineno = self.previous().lineno)
+			return Unary(op = self.previous().value, expr = self.expression(), lineno = self.previous().lineno)
 		elif self.match("LPAREN"):
 			expr = self.expression()
 			self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
@@ -304,7 +304,8 @@ class Parser:
 				return LocationPrimi(name = id, lineno = lineno)
 		elif self.match("DEREF"):
 			lineno = self.previous().lineno
-			return LocationMem(expression = self.expression(), lineno = lineno)
+
+			return LocationMem(expr = self.factor(), lineno = lineno)
 		else:
 			raise SyntaxError(f"Línea {self.peek().lineno}: Factor inesperado \n")
 

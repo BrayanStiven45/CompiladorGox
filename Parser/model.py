@@ -5,8 +5,11 @@ from typing      import List, Union
 class Visitor(metaclass=multimeta):
   pass
 
-@dataclass
+@dataclass(kw_only=True)
 class Node:
+  lineno : int = None
+  type : str = None
+
   def accept(self, v:Visitor, env):
     return v.visit(self, env)
   
@@ -30,14 +33,12 @@ class Location(Node):
 # Para tipo '`'
 @dataclass
 class LocationMem(Location):
-  expr: Expression
-  lineno: int
+  expression: Expression
 
 # Para tipo 'ID'
 @dataclass
 class LocationPrimi(Location):
   name: str
-  lineno: int
 # 1.1 Assignment
 #
 #     location = expression ;
@@ -45,7 +46,6 @@ class LocationPrimi(Location):
 class Assignment(Statement):
   location : Location
   expression : Expression
-  lineno: int
 
 #
 # 1.2 Printing
@@ -53,7 +53,6 @@ class Assignment(Statement):
 @dataclass
 class PrintStmt(Statement):
   expression: Expression
-  lineno: int
 
 # 1.3 Conditional
 #     if test { consequence } else { alternative }
@@ -61,7 +60,6 @@ class PrintStmt(Statement):
 class IfStmt(Statement):
   condition: Expression
   consequence: List[Statement]
-  lineno: int
   alternative: List[Statement] = None
 
 # 1.4 While Loop
@@ -70,7 +68,6 @@ class IfStmt(Statement):
 class WhileStmt(Statement):
   condition: Expression
   body: Statement
-  lineno: int
 
 # 1.5 Break y Continue
 #     while test {
@@ -79,7 +76,7 @@ class WhileStmt(Statement):
 #     }
 @dataclass
 class BreakStmt(Statement):
-  lineno: int
+  pass
 
 # 1.5 Break y Continue
 #     while test {
@@ -88,14 +85,13 @@ class BreakStmt(Statement):
 #     }
 @dataclass
 class ContinueStmt(Statement):
-  lineno: int
+  pass
 
 # 1.6 Return un valor
 #     return expresion ;
 @dataclass
 class ReturnStmt(Statement):
   expression: Expression
-  lineno: int
 
 # 2.1 Variables.  Las Variables pueden ser declaradas de varias formas.
 #
@@ -103,22 +99,22 @@ class ReturnStmt(Statement):
 #     const name [type] = value;
 #     var name type [= value];
 #     var name [type] = value;
-@dataclass
+
+#Todos los campos con valor por defecto deben ser pasados por nombre (keyword)
+@dataclass(kw_only=True) 
 class Vardecl(Statement):
   kind: str
   type: str
   name: str
-  lineno: int
   value: Expression = None
 
 # 2.3 Function Parameters
 #
 #     func square(x int) int { return x*x; }
-@dataclass
+@dataclass(kw_only=True)
 class Parameter(Node):
   name: str
   type: str
-  lineno: int
   # value: Expression = None
 
 # 2.2 Function definitions.
@@ -129,8 +125,7 @@ class Funcdecl(Statement):
   is_import: bool
   name: str
   parameters: List[Parameter]
-  type: str
-  lineno: int
+  return_type: str
   statements: List[Statement] #Esto debe ser o una lista de statements o un none
 
 # Observar bien esta clase como debe de ser y a quien debe de heredar
@@ -144,11 +139,10 @@ class Funcdecl(Statement):
 #     4.5          (Flotante)
 #     true,false   (Booleanos)
 #     'c'          (Carácter)
-@dataclass
+@dataclass(kw_only=True)
 class Literal(Expression):
   value: str
   type: str
-  lineno: int
 
 # 3.2 Binary Operators
 #     left + right   (Suma)
@@ -169,7 +163,6 @@ class Binary(Expression):
   op: str
   left: Expression
   right: Expression
-  lineno: int
 
 # 3.3 Unary Operators
 #     +operand  (Positivo)
@@ -179,19 +172,17 @@ class Binary(Expression):
 
 @dataclass
 class Unary(Expression):
-  oper: str
+  op: str
   expression : Expression
-  lineno: int
 
 
 # 3.5 Conversiones de tipo
 #     int(expr)
 #     float(expr)
-@dataclass
+@dataclass(kw_only=True)
 class TypeConversion(Expression):
   type: str
-  exp : Expression
-  lineno: int
+  expression : Expression
 
 # 3.6 Llamadas a función
 #     func(arg1, arg2, ..., argn)
@@ -199,7 +190,6 @@ class TypeConversion(Expression):
 class FuncCall(Expression):
   name: str
   arg: List[Expression]
-  lineno: int
 
 # #Para tipo 'ID'
 # @dataclass

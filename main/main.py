@@ -9,24 +9,22 @@ from Parser.parser import Parser
 from Checker.check import Checker
 from Codigo_Intermedio.IR import *
 
-# try:
+try:
 
-nodes = Parser('prueba.gox')
+    nodes = Parser('prueba.gox')
 
-ast = nodes.parse()
+    ast = nodes.parse()
 
-print(ast)
-# check = Checker()
+    print(ast)
+    # check = Checker()
 
-_, env = Checker.check(ast)
+    _, env = Checker.check(ast)
 
-env.print()
+    env.print()
 
-print(ast)
-
-module = IRCode.gencode(ast)
+    module = IRCode.gencode(ast)
     
-module.dump()
+    module.dump()
 
-# except Exception as e:
-#     print("Ocurrió un error:", e)
+except Exception as e:
+    print("Ocurrió un error:", e)

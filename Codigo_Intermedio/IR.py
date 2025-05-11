@@ -165,7 +165,7 @@ class IRCode(Visitor):
 			func.append(('PRINTI',))
 		elif n.type == 'float':
 			func.append(('PRINTF',))
-		elif n.type == 'char':
+		elif (n.type == 'char') or (n.type == 'bool'):
 			func.append(('PRINTB',))
 		else:
 			raise Exception(f'Error en la linea {n.lineno} en PrintStmt de codigo intermedio')
@@ -242,16 +242,20 @@ class IRCode(Visitor):
 
 		
 	def visit(self, n:Funcdecl, func:IRFunction):
-		parmnames = []
-		parmtypes = []
-		for parm in n.parameters:
-			parmnames.append(parm.name)
-			parmtypes.append(_typemap[parm.type])
+		parmnames = [p.name for p in n.parameters]
+		parmtypes = [_typemap[p.type] for p in n.parameters]
+		rettype = _typemap[n.type]
 
-		new_func = IRFunction(func.module, n.name, parmnames, parmtypes, _typemap[n.type], n.is_import)
+		if n.name == 'main':
+			name = '_actual_main'
+		else:
+			name = n.name
+
+		new_func = IRFunction(func.module, name, parmnames, parmtypes, rettype, n.is_import)
 		
-		for item in n.statements:
-			item.accept(self, new_func)
+		if not n.is_import:
+			for item in n.statements:
+				item.accept(self, new_func)
 
 	# --- Expressions
 
@@ -280,9 +284,20 @@ class IRCode(Visitor):
 		
 		if n.op == '&&':
 			# Validar el circuito corto: A && B, si A es falso => no necesita evaluar B
-			...
+			n.left.accept(self, func)
+			func.append(('IF,',))
+			n.right.accept(self, func)
+			func.append(('ELSE',))
+			func.append(('CONSTI', 0))
+			func.append(('ENDIF',))
+
 		elif n.op == '||':
-			...
+			n.left.accept(self, func)
+			func.append(('IF,',))
+			func.append(('CONSTI', 1))
+			func.append(('ELSE',))
+			n.right.accept(self, func)
+			func.append(('ENDIF',))
 		else:
 			n.left.accept(self, func)
 			n.right.accept(self, func)

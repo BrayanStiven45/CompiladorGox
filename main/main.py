@@ -31,13 +31,10 @@ try:
     print('Generador de Codigo Intermedio Correcto')
     module.dump()
 
-
-    
+    vm = StackMachine()
+    vm.load_ir(module)
+    vm.run()
 
 except Exception as e:
     print("Ocurrió un error:", e)
 
-
-vm = StackMachine()
-vm.load_ir(module)
-vm.run()

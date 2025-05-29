@@ -228,7 +228,11 @@ class IRCode(Visitor):
 		if n.value != None:
 			n.value.accept(self, func)
 
+		if n.kind == 'const':
+			n.type = n.value.type
+
 		if func.name == 'main':
+			# print(f'Esto es n {n}')
 			var_global = IRGlobal(n.name, _typemap[n.type])
 			func.module.globals[n.name] = var_global
 
@@ -262,14 +266,13 @@ class IRCode(Visitor):
 	def visit(self, n:Literal, func: IRFunction):
 		value = None
 		if n.type == 'int':
-			func.append(('CONSTI', n.value))
+			func.append(('CONSTI', int(n.value)))
 		elif n.type == 'float':
-			func.append(('CONSTF', n.value))
+			func.append(('CONSTF', float(n.value)))
 		elif n.type == 'char':
 			value = eval(n.value) if isinstance(n.value, str) else n.value
 
 			func.append(('CONSTI', ord(value)))
-
 		elif n.type == 'bool':
 			value = eval(n.value.capitalize()) #Para que python lo detecte como False o True y lo conviarta a 1 o 0
 			func.append(('CONSTI', int(value)))
@@ -281,6 +284,7 @@ class IRCode(Visitor):
 
 
 	def visit(self, n:Binary, func:IRFunction):
+		
 		
 		if n.op == '&&':
 			# Validar el circuito corto: A && B, si A es falso => no necesita evaluar B
@@ -301,6 +305,7 @@ class IRCode(Visitor):
 		else:
 			n.left.accept(self, func)
 			n.right.accept(self, func)
+			# print(f'esto es n de Binary {n}')
 			func.append((self._binop_code[n.left.type, n.op, n.right.type],))
 		
 	def visit(self, n:Unary, func:IRFunction):
@@ -340,9 +345,10 @@ class IRCode(Visitor):
 	def visit(self, n:LocationPrimi, func:IRFunction):
 		env = None
 
-		if n.name in func.parmnames and n.name in func.locals:
+		if n.name in func.parmnames or n.name in func.locals:
 			env = 'LOCAL'
 		else:
+			# print(f'entro aqui n {n}')
 			env = 'GLOBAL'		
 		
 		op = None
@@ -354,8 +360,6 @@ class IRCode(Visitor):
 		func.append((op, n.name))
 			
 
-
-	# Preguntar al profesor como seria esto ---------
 	def visit(self, n:LocationMem, func:IRFunction):
 		if n.usage == 'load':
 			n.expr.accept(self, func)
@@ -397,190 +401,3 @@ if __name__ == '__main__':
 		
 	module = IRCode.gencode(ast)
 	module.dump()
-
-
-
-	'''
-
-class IRCode(Visitor):
-
-	@classmethod
-	def gencode(cls, node:List[Statement]):
-		
-		# El nodo es el nodo superior del árbol de 
-		# modelo/análisis.
-		# La función inicial se llama "_init". No acepta 
-		# argumentos. Devuelve un entero.
-		
-		ircode = cls()
-		
-		module = IRModule()
-		func = IRFunction(module, 'main', [], [], 'I')
-		for item in node:
-			item.accept(ircode, func)
-		if '_actual_main' in module.functions:
-			func.append(('CALL', '_actual_main'))
-		else:
-			func.append(('CONSTI', 0))
-		func.append(('RET',))
-		return module
-	
-	# --- Statements
-	
-	def visit(self, n:Assignment, func:IRFunction):
-		# Visitar n.expr
-		# Visitar n.loc (tener en cuenta set/get)
-	
-	def visit(slef, n:Print, func:IRFunction):
-		n.expr.accept(self, func)
-		if n.expr.type == 'int':
-			func.append(('PRINTI',))
-		elif n.expr.type == 'float':
-			func.append(('PRINTF',))
-		elif n.expr.type == 'char':
-			func.append(('PRINTB',))
-
-	def visit(self, n:If, func:IRFunction):
-		# Visitar n.test
-		func.append(('IF',))
-		# Visitar n.cons
-		func.append(('ELSE',))
-		# Visitar, si esta definido, n.alt
-		func.append(('ENDIF',))
-
-	def visit(self, n:While, func:IRFunction):
-		func.append(('LOOP',))
-		func.append(('CONSTI', 1))
-		# Visitar n.test
-		func.append(('SUBI',))
-		func.append(('CBREAK',))
-		# Visitar n.body
-		func.append(('ENDLOOP',))
-
-	def visit(self, n:Break, func:IRFunction):
-		func.append(('CONSTI', 1))
-		func.append(('CBREAK',))
-
-	def visit(self, n:Continue, func:IRFunction):
-		func.append(('CONTINUE',))
-
-	def visit(self, n:Return, func:IRFunction):
-		# Visitar n.expr
-		func.append(('RET',))
-
-	# --- Declaration
-		
-	def visit(self, n:Variable, func:IRFunction):
-		pass
-		
-	def visit(self, n:Function, func:IRFunction):
-		
-		# Si encontramos una nueva función, tenemos que suspender la
-		# generación de código para la función actual "func" y crear
-		# una nueva función
-		
-		parmnames = [p.name for p in n.parms]
-		parmtypes = [_typemap[p.type] for p in n.parms]
-		rettype   = _typemap[n.type]
-
-		if n.name == 'main':
-			name = '_actual_main'
-		else:
-			name = n.name
-		
-		newfunc = IRFunction(
-			func.module,
-			name,
-			parmnames,
-			parmtypes,
-			retype,
-			n.imported
-		)
-
-		if not n.imported:
-			# Visitar n.stmts
-		
-	# --- Expressions
-	
-	def visit(self, n:Integer, func:IRFunction):
-		func.append(('CONSTI', n.value))
-
-	def visit(self, n:Float, func:IRFunction):
-		func.append(('CONSTF', n.value))
-
-	def visit(self, n:Char, func:IRFunction):
-		func.append(('CONSTI', ord(n.value)))
-		
-	def visit(self, n:Bool, func:IRFunction):
-		func.append(('CONSTI', int(n.value)))
-
-	def visit(self, n:BinOp, func:IRFunction):
-		if n.oper == '&&':
-			# short-circuit: Si n.left es false, hasta aca llega
-		
-		elif n.oper == '||':
-			# short-circuit: si n.left es true, hasta aca llega
-
-		else:
-			n.left.accept(self, func)
-			n.right.accept(self, func)
-			func.append((self._binop_code[n.left.type, n.oper, n.right.type],))
-		
-	def visit(self, n:UnaryOp, func:IRFunction):
-		# Visitar n.expr
-		func.extend((self._unaryop_code[n.oper, n.expr.type]))
-		
-	def visit(self, n:TypeCast, func:IRFunction):
-		# Visitar n.expr
-		if n.expr.type != n.type:
-			func.extend(self._typecast_code[n.expr.type, n.type])
-
-	def visit(self, n:FunctionCall, func:IRFunction):
-		# Visitar n.args
-		func.append(('CALL', n.name))
-	
-	def visit(self, n:NamedLocation, func:IRFunction):
-		# Revisar si la variable es para store
-		func.append(('LOCAL_SET', n.name)) / func.append(('GLOBAL_SET', n.name))
-		# else
-		func.append(('LOCAL_GET', n.name)) / func.append(('GLOBAL_GET', n.name))
-
-	def visit(self, n:MemoryLocation, func:IRFunction):
-		if n.usage == 'load':
-			# Visitar n.address
-			if n.type in {'int', 'bool'}:
-				func.append('PEEKI',)
-			elif n.type == 'float':
-				func.append('PEEKF',)
-			elif n.type == 'char':
-				func.append('PEEKB',)
-		elif n.usage == 'store':
-			# Visitar n.address
-			# Visitar n.store_value (agregado en nodo Assignment)
-			if n.type in {'int', 'bool'}:
-				func.append('POKEI',)
-			elif n.type == 'float':
-				func.append('POKEF',)
-			elif n.type == 'char':
-				func.append('POKEB',)
-
-
-if __name__ == '__main__':
-	import sys
-	
-	from errors import error, errors_detected
-	from gparse import parse
-	from gcheck import Check
-
-	if len(sys.argv) != 2:
-		raise SystemExit("Usage: python ircode.py <filename>")
-	
-	txt = open(filename, encoding='utf-8').read()
-	top = parse(txt)
-	env = Check.checker(top)
-		
-	if not errors_detected():
-		module = IRCode.gencode(top)
-		module.dump()
-		
-	'''

@@ -25,7 +25,7 @@ class Checker(Visitor):
 		except Exception as e:
 			print("Ocurrió un error en el Checker:", e)
 			sys.exit(1)
-			
+		
 		return check, env
 
 
@@ -74,6 +74,7 @@ class Checker(Visitor):
 		'''
 		1. visitar n.expr
 		'''
+
 		print_type = n.expr.accept(self, env)
 		n.type = print_type
 
@@ -328,6 +329,7 @@ class Checker(Visitor):
 			if params[i].accept(self, env) != args[i].accept(self, env):
 				raise Exception(f'FunCallError: Linea {n.lineno}: Tipo de dato no coinciden')
 		
+		n.type = func.type
 		return func.type
 
 
@@ -361,6 +363,8 @@ class Checker(Visitor):
 
 		n.usage = 'load'
 		n.type = 'int'
+
+		return n.type
 
 if __name__ == '__main__':
 	nodes = Parser('prueba.gox')

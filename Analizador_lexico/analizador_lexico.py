@@ -182,12 +182,11 @@ class Tokenize:
             for token in self.tokenize(file.read()): # Tokenize the file content
                 tokens.append(token)
         
-        self.printToken(tokens) # Print the tokens in a table format
+        # self.printToken(tokens) # Print the tokens in a table format
         
         if self.errors:
             raise self.LexerError(self.errors)
         
-        print('Analisis Lexico Correcto')
 
         return tokens
 

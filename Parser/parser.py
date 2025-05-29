@@ -36,7 +36,6 @@ class Parser:
 			print("Ocurrió un error en el Parse:", e)
 			sys.exit(1)
 
-		print('Analisis Sintactico Correcto')
 		return Program(stmts = statements)
 
 	# -------------------------------
@@ -242,6 +241,7 @@ class Parser:
 			op = self.previous().value
 			lineno = self.previous().lineno
 			right = self.addterm()
+			
 			relterm = Binary(op = op, left = relterm, right = right, lineno = lineno)
 		return relterm
 		
@@ -276,7 +276,15 @@ class Parser:
 				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
 				return TypeConversion(type = type, expr = expr, lineno = self.previous().lineno)
 		elif self.match("PLUS") or self.match("MINUS") or self.match("GROW"):
-			return Unary(op = self.previous().value, expr = self.expression(), lineno = self.previous().lineno)
+			op = self.previous().value
+			expr = None
+			if self.match("LPAREN"):
+				expr = self.expression()
+				self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")
+			else:
+				expr = self.factor()
+
+			return Unary(op = op, expr = expr, lineno = self.previous().lineno)
 		elif self.match("LPAREN"):
 			expr = self.expression()
 			self.consume("RPAREN", "Se esperaba un parentesis derecho ')'")

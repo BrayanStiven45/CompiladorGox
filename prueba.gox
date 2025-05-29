@@ -1,50 +1,42 @@
-/* mandel.gox */
+/* ************************************************ *
+ *
+ * Criba de Eratostenes (Numeros Primos)
+ *
+ * ************************************************ *
+ */
 
-const xmin = -2.0;
-const xmax = 1.0;
-const ymin = -1.5;
-const ymax = 1.5;
-const width = 80.0;
-const height = 40.0;
-const threshhold = 1000;
+const n = 100;         // Cuantos primos
+const base = ^(n + 1); // Memoria para n+1 posiciones
 
-func in_mandelbrot(x0 float, y0 float, n int) bool {
-    var x float = 0.0;
-    var y float = 0.0;
-    var xtemp float;
-    while n > 0 {
-        xtemp = x*x - y*y + x0;
-        y = 2.0*x*y + y0;
-        x = xtemp;
-        n = n - 1;
-        if x*x + y*y > 4.0 {
-            return false;
-        }
-    }
-    return true;
+// Inicializa todos los valores en true (1)
+var i int = 2;
+while i <= n {
+	`(base + i) = 1;		// true
+	i = i + 1;
 }
 
-func mandel() int {
-     var dx float = (xmax - xmin)/width;
-     var dy float = (ymax - ymin)/height;
-
-     var y float = ymax;
-     var x float;
-
-     while y >= ymin {
-         x = xmin;
-         while x < xmax {
-             if in_mandelbrot(x, y, threshhold) {
-                print '*';
-             } else {
-                print '.';
-             }
-             x = x + dx;
-         }
-         print '\n';
-         y = y - dy;
-         
-     }
-     return 0;
+// Criba de Eratostenes
+i = 2;
+while i * i <= n {
+	if `(base + i) == 1  {
+		var j int = i * i;
+		while j <= n {
+			print j;
+            print ' ';
+			`(base + j) = 0;   // No primo (false)
+			j = j + i;
+		}
+        print '\n';
+	}
+	i = i + 1;
+}
+// Imprimir los primos
+i = 2;
+while i <= n {
+	if `(base + i) == 1 {
+		print i;
+        print ' ';
+	}
+	i = i + 1;
 }
 

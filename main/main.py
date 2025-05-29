@@ -29,7 +29,7 @@ try:
 
     module = IRCode.gencode(ast)
     print('Generador de Codigo Intermedio Correcto')
-    # module.dump()
+    module.dump()
 
 
     

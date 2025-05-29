@@ -32,10 +32,15 @@ func mandel(width int, height int) int {
 	var addr int = 0;
 	var memsize int = ^(width*height*4);
 
+	var temp1 float;
+	var temp2 float;
+
 	while iy >= 0 {
 		ix = 0;
 		while ix < width {
-			if in_mandelbrot(float(ix)*dx+xmin, float(iy)*dy+ymin, threshhold) {
+			temp1 = float(ix)*dx+xmin;
+			temp2 = float(iy)*dy+ymin
+			if in_mandelbrot(temp1, temp2, threshhold) {
 				`addr = '\xff';
 				`(addr+1) = '\x00';
 				`(addr+2) = '\x00';

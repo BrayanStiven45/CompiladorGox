@@ -16,6 +16,8 @@ class StackMachine:
         self.endif_pc = 0
         self.start_loop_pc = 0
         self.end_loop_pc = 0
+        self.pc_if = 0
+        self.pc_loop = 0
 
         # self.break_loop = False
         # self.continue_loop = False
@@ -208,6 +210,7 @@ class StackMachine:
             raise TypeError("Error en StackMachine: SUBF requiere dos flotantes")
     
     def op_MULF(self):
+        # print(f'esto es stack {self.stack}')
         b_type, b = self.stack.pop()
         a_type, a = self.stack.pop()
         if a_type == b_type == 'F':
@@ -375,6 +378,7 @@ class StackMachine:
                 pc = self.findEndLoop(pc)
             elif a[0] == 'ENDLOOP':
                 return pc
+    
     # NUevo para loop       
     # def op_CBREAK(self):
     #     # print(self.stack)
@@ -473,6 +477,8 @@ class StackMachine:
             # print(f'para el pc {self.pc}')
             # print(f'para locals {self.locals_stack}')
             # print(f'para la pila {self.stack}')
+            # print(f'Operacion a reslizar op_{opname}')
+            # print(f'para el pc_loop {self.pc_loop}')
 
             if opname == 'LOOP' or opname == 'IF':
                 args.append(self.pc_loop)
@@ -497,6 +503,7 @@ class StackMachine:
             else:
                 raise RuntimeError(f"Error en StackMachine: Instrucción desconocida: {opname}")
 
+            # print(f'Esto es pila: {self.stack}')
         return self.end_loop_pc
 
     def findElseAndEndIf(self, pc):
@@ -562,6 +569,9 @@ class StackMachine:
             args = instr[1:] if len(instr) > 1 else []
             method = getattr(self, f"op_{opname}", None)
 
+            # print(f'Operacion a reslizar op_{opname}')
+            # print(f'para el pc_if {self.pc_if}')
+
             if opname == 'LOOP' or opname == 'IF':
                 args.append(self.pc_if)  
                 else_pc = self.else_pc
@@ -596,7 +606,7 @@ class StackMachine:
                 raise RuntimeError(f"Error en StackMachine: Instrucción desconocida: {opname}")
             
             # print(f'Esto es pila: {self.stack}')
-            
+            # print(f'Esto es pila: {self.stack}')
             self.pc_if += 1
         return self.endif_pc
             
@@ -617,9 +627,11 @@ class StackMachine:
 
         else_pc = self.else_pc
         endif_pc = self.endif_pc
+        pc_if = self.pc_if
 
         start_loop_pc = self.start_loop_pc
         end_loop_pc = self.end_loop_pc
+        pc_loop = self.pc_loop
         
 
         old_pc = self.pc
@@ -655,14 +667,17 @@ class StackMachine:
         self.program = func.code
 
         # print(self.program)
+        # print(f'Incia funcion {name_func}')
         self.run()
-        
+        # print(f'Finaliza funcion {name_func}')
         # print(f'sale de funcion {name_func}')
         self.else_pc = else_pc
         self.endif_pc = endif_pc
+        self.pc_if = pc_if
 
         self.start_loop_pc = start_loop_pc
         self.end_loop_pc = end_loop_pc
+        self.pc_loop = pc_loop
 
         self.locals_stack = old_locals_stack
         # print(f'con locals {self.locals_stack}')
